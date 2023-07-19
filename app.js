@@ -30,7 +30,7 @@ app.use(multer().none());
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(session({
-  secret: 'keyboard cat',
+  secret: '8e74vb1y8424iwu34jkiuv', // TODO: change secret to .env var and don't publish to Github
   resave: false, // don't save session if unmodified
   saveUninitialized: false, // don't create session until something stored
   store: new SQLiteStore({ db: 'sessions.db', dir: './var/db' })

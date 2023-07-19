@@ -4,38 +4,40 @@ var WebAuthnStrategy = require('passport-fido2-webauthn');
 var SessionChallengeStore = require('passport-fido2-webauthn').SessionChallengeStore;
 var base64url = require('base64url');
 var uuid = require('uuid').v4;
-var db = require('../db');
+var pool = require('../db');
 
 
 var store = new SessionChallengeStore();
 
-passport.use(new WebAuthnStrategy({ store: store }, function verify(id, userHandle, cb) {
-  db.get('SELECT * FROM public_key_credentials WHERE external_id = ?', [ id ], function(err, row) {
+passport.use(new WebAuthnStrategy({ store: pool }, function verify(id, userHandle, cb) {
+  pool.query('SELECT * FROM public_key_credentials WHERE external_id = $1', [id], function(err, result) {
     if (err) { return cb(err); }
+    const row = result.rows[0];
     if (!row) { return cb(null, false, { message: 'Invalid key. '}); }
     var publicKey = row.public_key;
-    db.get('SELECT * FROM users WHERE rowid = ?', [ row.user_id ], function(err, row) {
+    pool.query('SELECT * FROM users WHERE rowid = $1', [row.user_id], function(err, result) {
       if (err) { return cb(err); }
-      if (!row) { return cb(null, false, { message: 'Invalid key. '}); }
-      if (Buffer.compare(row.handle, userHandle) != 0) {
+      const userRow = result.rows[0];
+      if (!userRow) { return cb(null, false, { message: 'Invalid key. '}); }
+      if (Buffer.compare(userRow.handle, userHandle) != 0) {
         return cb(null, false, { message: 'Invalid key. '});
       }
-      return cb(null, row, publicKey);
+      return cb(null, userRow, publicKey);
     });
   });
 }, function register(user, id, publicKey, cb) {
-  db.run('INSERT INTO users (username, name, handle) VALUES (?, ?, ?)', [
+  pool.query('INSERT INTO users (username, name, handle) VALUES ($1, $2, $3) RETURNING rowid', [
     user.name,
     user.displayName,
     user.id
-  ], function(err) {
+  ], function(err, result) {
     if (err) { return cb(err); }
     var newUser = {
-      id: this.lastID,
+      id: result.rows[0].rowid,
       username: user.name,
       name: user.displayName
     };
-    db.run('INSERT INTO public_key_credentials (user_id, external_id, public_key) VALUES (?, ?, ?)', [
+    pool.query('INSERT INTO public_key_credentials (user_id, external_id, public_key) VALUES ($1, $2, $3)', [
       newUser.id,
       id,
       publicKey
