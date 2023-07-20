@@ -39,6 +39,7 @@ app.use(session({
   })
 }));
 //app.use(csrf());
+app.use(cors())
 app.use(passport.authenticate('session'));
 app.use(function(req, res, next) {
   var msgs = req.session.messages || [];
@@ -52,7 +53,6 @@ app.use(function(req, res, next) {
   res.locals.csrfToken = 'TODO';
   next();
 });
-app.use(cors())
 
 app.use('/', indexRouter);
 app.use('/', authRouter);
