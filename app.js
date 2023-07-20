@@ -1,4 +1,5 @@
 require('dotenv').config();
+const cors = require("cors")
 var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
@@ -51,6 +52,7 @@ app.use(function(req, res, next) {
   res.locals.csrfToken = 'TODO';
   next();
 });
+app.use(cors())
 
 app.use('/', indexRouter);
 app.use('/', authRouter);
