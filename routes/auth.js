@@ -6,7 +6,6 @@ var base64url = require('base64url');
 var uuid = require('uuid').v4;
 var pool = require('../db');
 
-
 var store = new SessionChallengeStore();
 
 passport.use(new WebAuthnStrategy({ store: store }, function verify(id, userHandle, cb) {
