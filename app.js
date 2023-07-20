@@ -1,5 +1,4 @@
 require('dotenv').config();
-const cors = require('cors');
 var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
@@ -52,13 +51,6 @@ app.use(function(req, res, next) {
   res.locals.csrfToken = 'TODO';
   next();
 });
-
-var corsOptions = {
-  origin: "*",
-  optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
-}
-app.use(cors(corsOptions));
-
 
 app.use('/', indexRouter);
 app.use('/', authRouter);
