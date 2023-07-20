@@ -8,7 +8,7 @@ const pool = new Pool({
 // const pool = new Pool({
 //   connectionString: process.env.DATABASE_URL || 'postgres://postgres:@localhost:5432/todos',
 //   ssl: process.env.DATABASE_URL ? true : false
-// })
+// }) 
 
 pool.query(`
   CREATE TABLE IF NOT EXISTS users (
