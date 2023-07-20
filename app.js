@@ -52,7 +52,7 @@ app.use(function(req, res, next) {
   res.locals.csrfToken = 'TODO';
   next();
 });
-app.use(cors);
+app.use(cors());
 
 
 app.use('/', indexRouter);
