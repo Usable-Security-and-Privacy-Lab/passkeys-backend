@@ -86,6 +86,7 @@ router.post('/login/public-key', passport.authenticate('webauthn', {
 }), function(req, res, next) {
   res.json({ ok: true, location: '/' });
 }, function(err, req, res, next) {
+  console.log(err)
   var cxx = Math.floor(err.status / 100);
   if (cxx != 4) { return next(err); }
   res.json({ ok: false, location: '/login' });
@@ -93,7 +94,9 @@ router.post('/login/public-key', passport.authenticate('webauthn', {
 
 router.post('/login/public-key/challenge', function(req, res, next) {
   store.challenge(req, function(err, challenge) {
-    if (err) { return next(err); }
+    if (err) { console.log(err)
+      return next(err); 
+    }
     res.json({ challenge: base64url.encode(challenge) });
   });
 });
@@ -118,7 +121,10 @@ router.post('/signup/public-key/challenge', function(req, res, next) {
     displayName: req.body.name
   };
   store.challenge(req, { user: user }, function(err, challenge) {
-    if (err) { return next(err); }
+    if (err) { 
+      console.log(err)
+      return next(err); 
+    }
     user.id = base64url.encode(user.id);
     res.json({ user: user, challenge: base64url.encode(challenge) });
   });
