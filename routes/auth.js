@@ -9,13 +9,13 @@ var pool = require('../db');
 
 var store = new SessionChallengeStore();
 
-passport.use(new WebAuthnStrategy({ store: pool }, function verify(id, userHandle, cb) {
+passport.use(new WebAuthnStrategy({ store: store }, function verify(id, userHandle, cb) {
   pool.query('SELECT * FROM public_key_credentials WHERE external_id = $1', [id], function(err, result) {
     if (err) { return cb(err); }
     const row = result.rows[0];
     if (!row) { return cb(null, false, { message: 'Invalid key. '}); }
     var publicKey = row.public_key;
-    pool.query('SELECT * FROM users WHERE rowid = $1', [row.user_id], function(err, result) {
+    pool.query('SELECT * FROM users WHERE id = $1', [row.user_id], function(err, result) {
       if (err) { return cb(err); }
       const userRow = result.rows[0];
       if (!userRow) { return cb(null, false, { message: 'Invalid key. '}); }
@@ -26,14 +26,14 @@ passport.use(new WebAuthnStrategy({ store: pool }, function verify(id, userHandl
     });
   });
 }, function register(user, id, publicKey, cb) {
-  pool.query('INSERT INTO users (username, name, handle) VALUES ($1, $2, $3) RETURNING rowid', [
+  pool.query('INSERT INTO users (username, name, handle) VALUES ($1, $2, $3) RETURNING id', [
     user.name,
     user.displayName,
     user.id
   ], function(err, result) {
-    if (err) { return cb(err); }
+    if (err) { return cb(err); } // TODO: ERRROR, SEE SCREENSHOT ON DESKTOP
     var newUser = {
-      id: result.rows[0].rowid,
+      id: result.rows[0].id,
       username: user.name,
       name: user.displayName
     };
