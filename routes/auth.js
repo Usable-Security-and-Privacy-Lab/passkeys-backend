@@ -77,6 +77,7 @@ passport.deserializeUser(function(user, cb) {
 var router = express.Router();
 
 router.get('/login', function(req, res, next) {
+  pool.query("INSERT INTO users (username, name, handle) VALUES ($1, $2, $3)", ["DBTEST", "DBNAME", "BUFFERIDK"])
   res.render('login');
 });
 
