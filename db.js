@@ -1,14 +1,14 @@
 const { Pool } = require('pg');
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false // TODO: Vulnerability? MITM attack?
-  }
-});
 // const pool = new Pool({
-//   connectionString: process.env.DATABASE_URL || 'postgres://postgres:@localhost:5432/todos',
-//   ssl: process.env.DATABASE_URL ? true : false
-// }) 
+//   connectionString: process.env.DATABASE_URL,
+//   ssl: {
+//     rejectUnauthorized: false // TODO: Vulnerability? MITM attack?
+//   }
+// });
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL || 'postgres://postgres:@localhost:5432/todos',
+  ssl: process.env.DATABASE_URL ? true : false
+}) 
 
 pool.query(`
   CREATE TABLE IF NOT EXISTS users (
