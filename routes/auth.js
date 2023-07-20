@@ -9,6 +9,7 @@ var pool = require('../db');
 var store = new SessionChallengeStore();
 
 passport.use(new WebAuthnStrategy({ store: store }, function verify(id, userHandle, cb) {
+  console.log("Entering VERIFY");
   pool.query('SELECT * FROM public_key_credentials WHERE external_id = $1', [id], function(err, result) {
     if (err) { 
       console.log(err);
@@ -31,6 +32,7 @@ passport.use(new WebAuthnStrategy({ store: store }, function verify(id, userHand
     });
   });
 }, function register(user, id, publicKey, cb) {
+  console.log("Entering REGISTER");
   pool.query('INSERT INTO users (username, name, handle) VALUES ($1, $2, $3) RETURNING id', [
     user.name,
     user.displayName,
