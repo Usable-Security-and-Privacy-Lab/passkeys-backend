@@ -1,5 +1,4 @@
 require('dotenv').config();
-const cors = require("cors")
 var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
@@ -39,15 +38,6 @@ app.use(session({
   })
 }));
 //app.use(csrf());
-app.use(cors({
-  origin: "https://passkeys-backend-7c680c0b8dcc.herokuapp.com"
-}))
-app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  next();
-});
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(passport.authenticate('session'));
