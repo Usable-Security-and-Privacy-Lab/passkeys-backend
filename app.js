@@ -38,8 +38,6 @@ app.use(session({
   })
 }));
 //app.use(csrf());
-app.use(passport.initialize());
-app.use(passport.session());
 app.use(passport.authenticate('session'));
 app.use(function(req, res, next) {
   var msgs = req.session.messages || [];

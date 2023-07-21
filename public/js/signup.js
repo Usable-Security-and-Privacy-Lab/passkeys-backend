@@ -16,12 +16,10 @@ window.addEventListener('load', function() {
       return response.json();
     })
     .then(function(json) {
-      console.log(json); // TODO remove
       // https://chromium.googlesource.com/chromium/src/+/master/content/browser/webauth/uv_preferred.md
       return navigator.credentials.create({
         publicKey: {
           rp: {
-            id: "passkeys-backend-7c680c0b8dcc.herokuapp.com",
             name: 'Todos'
           },
           user: {

@@ -9,20 +9,13 @@ var pool = require('../db');
 var store = new SessionChallengeStore();
 
 passport.use(new WebAuthnStrategy({ store: store }, function verify(id, userHandle, cb) {
-  console.log("Entering VERIFY");
   pool.query('SELECT * FROM public_key_credentials WHERE external_id = $1', [id], function(err, result) {
-    if (err) { 
-      console.log(err);
-      return cb(err); 
-    }
+    if (err) { return cb(err); }
     const row = result.rows[0];
     if (!row) { return cb(null, false, { message: 'Invalid key. '}); }
     var publicKey = row.public_key;
     pool.query('SELECT * FROM users WHERE id = $1', [row.user_id], function(err, result) {
-      if (err) { 
-        console.log(err);
-        return cb(err); 
-      }
+      if (err) { return cb(err); }
       const userRow = result.rows[0];
       if (!userRow) { return cb(null, false, { message: 'Invalid key. '}); }
       if (Buffer.compare(userRow.handle, userHandle) != 0) {
@@ -32,16 +25,12 @@ passport.use(new WebAuthnStrategy({ store: store }, function verify(id, userHand
     });
   });
 }, function register(user, id, publicKey, cb) {
-  console.log("Entering REGISTER");
   pool.query('INSERT INTO users (username, name, handle) VALUES ($1, $2, $3) RETURNING id', [
     user.name,
     user.displayName,
     user.id
   ], function(err, result) {
-    if (err) { 
-      console.log(err);
-      return cb(err); 
-    }
+    if (err) { return cb(err); }
     var newUser = {
       id: result.rows[0].id,
       username: user.name,
@@ -52,10 +41,7 @@ passport.use(new WebAuthnStrategy({ store: store }, function verify(id, userHand
       id,
       publicKey
     ], function(err) {
-      if (err) { 
-        console.log(err);
-        return cb(err); 
-      }
+      if (err) { return cb(err); }
       return cb(null, newUser);
     });
   });
@@ -84,24 +70,16 @@ router.post('/login/public-key', passport.authenticate('webauthn', {
   failureMessage: true,
   failWithError: true
 }), function(req, res, next) {
-  console.log("In /login/public-key passport.authenticate method");
-  console.log(req.body)
   res.json({ ok: true, location: '/' });
 }, function(err, req, res, next) {
-  console.log("In /login/public-key passport.authenticate method ERROR FUNC");
-  console.log(req.body)
-  console.log(err)
   var cxx = Math.floor(err.status / 100);
   if (cxx != 4) { return next(err); }
   res.json({ ok: false, location: '/login' });
 });
 
 router.post('/login/public-key/challenge', function(req, res, next) {
-  console.log(req.body);
   store.challenge(req, function(err, challenge) {
-    if (err) { console.log(err)
-      return next(err); 
-    }
+    if (err) { return next(err); }
     res.json({ challenge: base64url.encode(challenge) });
   });
 });
@@ -125,13 +103,8 @@ router.post('/signup/public-key/challenge', function(req, res, next) {
     name: req.body.username,
     displayName: req.body.name
   };
-  console.log("In /signup/public-key/challenge");
-  console.log(req.body);
   store.challenge(req, { user: user }, function(err, challenge) {
-    if (err) { 
-      console.log(err)
-      return next(err); 
-    }
+    if (err) { return next(err); }
     user.id = base64url.encode(user.id);
     res.json({ user: user, challenge: base64url.encode(challenge) });
   });
