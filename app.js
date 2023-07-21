@@ -39,7 +39,9 @@ app.use(session({
   })
 }));
 //app.use(csrf());
-app.use(cors())
+app.use(cors({
+  origin: "https://passkeys-backend-7c680c0b8dcc.herokuapp.com"
+}))
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(passport.authenticate('session'));
@@ -55,6 +57,7 @@ app.use(function(req, res, next) {
   res.locals.csrfToken = 'TODO';
   next();
 });
+
 
 app.use('/', indexRouter);
 app.use('/', authRouter);
