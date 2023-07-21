@@ -42,6 +42,12 @@ app.use(session({
 app.use(cors({
   origin: "https://passkeys-backend-7c680c0b8dcc.herokuapp.com"
 }))
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  next();
+});
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(passport.authenticate('session'));
