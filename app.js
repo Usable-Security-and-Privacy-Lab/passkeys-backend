@@ -53,6 +53,7 @@ app.use(function(req, res, next) {
   res.locals.csrfToken = 'TODO';
   next();
 });
+app.set('trust proxy', true);
 
 
 app.use('/', indexRouter);
