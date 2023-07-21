@@ -57,6 +57,13 @@ window.addEventListener('load', function() {
       if (credential.response.getTransports) {
         body.response.transports = credential.response.getTransports();
       }
+
+      const clientData = JSON.parse(base64url.decode(body.response.clientDataJSON));
+      const origin = clientData.origin;
+
+      body.response.clientData = {
+        origin: origin
+      }
       
       return fetch('/login/public-key', {
         method: 'POST',

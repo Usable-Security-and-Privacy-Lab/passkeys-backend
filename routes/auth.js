@@ -84,6 +84,10 @@ router.post('/login/public-key', passport.authenticate('webauthn', {
   failureMessage: true,
   failWithError: true
 }), function(req, res, next) {
+  const origin = req.get('origin');
+   if (origin !== clientData.origin) {
+     return self.fail({ message: 'Origin mismatch in login/public-key' }, 403);
+   }
   res.json({ ok: true, location: '/' });
 }, function(err, req, res, next) {
   console.log(err)
@@ -113,6 +117,10 @@ router.get('/signup', function(req, res, next) {
 });
 
 router.post('/signup/public-key/challenge', function(req, res, next) {
+  const origin = req.get('origin');
+   if (origin !== clientData.origin) {
+     return self.fail({ message: 'Origin mismatch in signup/public-key/challenge' }, 403);
+   }
   var handle = Buffer.alloc(16);
   handle = uuid({}, handle);
   var user = {
