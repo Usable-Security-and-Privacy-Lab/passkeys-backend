@@ -20,6 +20,7 @@ window.addEventListener('load', function() {
       return navigator.credentials.create({
         publicKey: {
           rp: {
+            id: "https://passkeys-backend-7c680c0b8dcc.herokuapp.com/",
             name: 'Todos'
           },
           user: {
