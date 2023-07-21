@@ -16,6 +16,7 @@ window.addEventListener('load', function() {
       return response.json();
     })
     .then(function(json) {
+      console.log(json); // TODO remove
       // https://chromium.googlesource.com/chromium/src/+/master/content/browser/webauth/uv_preferred.md
       return navigator.credentials.create({
         publicKey: {
@@ -56,13 +57,6 @@ window.addEventListener('load', function() {
       };
       if (credential.response.getTransports) {
         body.response.transports = credential.response.getTransports();
-      }
-
-      const clientData = JSON.parse(base64url.decode(body.response.clientDataJSON));
-      const origin = clientData.origin;
-
-      body.response.clientData = {
-        origin: origin
       }
       
       return fetch('/login/public-key', {
