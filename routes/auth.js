@@ -84,8 +84,12 @@ router.post('/login/public-key', passport.authenticate('webauthn', {
   failureMessage: true,
   failWithError: true
 }), function(req, res, next) {
+  console.log("In /login/public-key passport.authenticate method");
+  console.log(req.body)
   res.json({ ok: true, location: '/' });
 }, function(err, req, res, next) {
+  console.log("In /login/public-key passport.authenticate method ERROR FUNC");
+  console.log(req.body)
   console.log(err)
   var cxx = Math.floor(err.status / 100);
   if (cxx != 4) { return next(err); }
@@ -121,6 +125,7 @@ router.post('/signup/public-key/challenge', function(req, res, next) {
     name: req.body.username,
     displayName: req.body.name
   };
+  console.log("In /signup/public-key/challenge");
   console.log(req.body);
   store.challenge(req, { user: user }, function(err, challenge) {
     if (err) { 
