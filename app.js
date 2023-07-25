@@ -31,7 +31,7 @@ app.use(cookieParser());
 app.get('/.well-known/apple-app-site-association', (req, res) => {
   // Send the AASA with correct Content-Type
   res.set('Content-Type', 'application/json');
-  res.sendFile(path.join(__dirname + 'public/.well-known/apple-app-site-association'));
+  res.sendFile(path.join(__dirname + '/public/.well-known/apple-app-site-association'));
 });
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(session({
