@@ -1,5 +1,8 @@
 {
   "webcredentials": {
-     "apps": [ "4U9786SGXR.com.example.apple-samplecode.ShinySHINYV2" ]
+     "apps": [ 
+      "4U9786SGXR.com.example.apple-samplecode.ShinySHINYV2",
+      "4U9786SGXR.com.davidgaag.PasskeysTest"
+     ]
   }
 }
