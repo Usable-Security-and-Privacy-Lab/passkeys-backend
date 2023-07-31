@@ -80,9 +80,18 @@ router.post('/login/public-key', passport.authenticate('webauthn', {
   failureMessage: true,
   failWithError: true
 }), function(req, res, next) {
+  //
+  console.log("In /login/public-key after passport.authenticate");
+  console.log(req.body)
   console.log("/login/public-key after passport.authenticate")
+  //
   res.json({ ok: true, location: '/' });
 }, function(err, req, res, next) {
+  //
+  console.log("In /login/public-key after passport.authenticate ERROR FUNC");
+  console.log(req.body)
+  console.log(err)
+  //
   var cxx = Math.floor(err.status / 100);
   if (cxx != 4) { return next(err); }
   res.json({ ok: false, location: '/login' });
