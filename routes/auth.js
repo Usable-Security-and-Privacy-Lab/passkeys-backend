@@ -10,9 +10,9 @@ var store = new SessionChallengeStore();
 
 passport.use(new WebAuthnStrategy({ store: store }, function verify(id, userHandle, cb) {
   //
-  print("In verify");
-  print("id: " + id);
-  print("userHandle: " + userHandle)
+  console.log("In verify");
+  console.log("id: " + id);
+  console.log("userHandle: " + userHandle)
   //
   pool.query('SELECT * FROM public_key_credentials WHERE external_id = $1', [id], function(err, result) {
     if (err) { return cb(err); }
@@ -31,9 +31,9 @@ passport.use(new WebAuthnStrategy({ store: store }, function verify(id, userHand
   });
 }, function register(user, id, publicKey, cb) {
   //
-  print("In register");
-  print("id: " + id);
-  print("publicKey: " + publicKey)
+  console.log("In register");
+  console.log("id: " + id);
+  console.log("publicKey: " + publicKey)
   //
   pool.query('INSERT INTO users (username, name, handle) VALUES ($1, $2, $3) RETURNING id', [
     user.name,
@@ -80,7 +80,7 @@ router.post('/login/public-key', passport.authenticate('webauthn', {
   failureMessage: true,
   failWithError: true
 }), function(req, res, next) {
-  print("/login/public-key after passport.authenticate")
+  console.log("/login/public-key after passport.authenticate")
   res.json({ ok: true, location: '/' });
 }, function(err, req, res, next) {
   var cxx = Math.floor(err.status / 100);
