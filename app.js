@@ -6,11 +6,11 @@ var multer  = require('multer');
 var cookieParser = require('cookie-parser');
 var session = require('express-session');
 const PgSession = require('connect-pg-simple')(session);
-var csrf = require('csurf');
+// var csrf = require('csurf');
 var passport = require('passport');
 var logger = require('morgan');
 var pool = require('./db');
-var cors = require('cors');
+var cors = require('cors'); // TODO: delete? do we need CORS?
 
 var indexRouter = require('./routes/index');
 var authRouter = require('./routes/auth');
@@ -58,7 +58,7 @@ app.use(function(req, res, next) {
   next();
 });
 app.set('trust proxy', true);
-app.use(cors());
+app.use(cors()); // TODO: delete? do we need CORS?
 
 
 app.use('/', indexRouter);
