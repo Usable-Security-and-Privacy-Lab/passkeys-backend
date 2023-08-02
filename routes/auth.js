@@ -87,7 +87,7 @@ router.post('/login/public-key', passport.authenticate('webauthn', {
   console.log("In /login/public-key after passport.authenticate. Request body:");
   console.log(req.body)
   //
-  res.json({ ok: true, username: req.username });
+  res.json({ ok: true, username: req.username }); // TODO: encode username in base64url?
 }, function(err, req, res, next) {
   //
   console.log("In /login/public-key after passport.authenticate ERROR FUNC. Request body:");
