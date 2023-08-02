@@ -33,8 +33,10 @@ passport.use(new WebAuthnStrategy({ store: store }, function verify(id, userHand
   //
   console.log("In register");
   console.log("id: " + id);
-  console.log("publicKey: " + publicKey)
-  console.log("user: " + user)
+  console.log("publicKey: " + publicKey);
+  console.log("user.name: " + user.name);
+  console.log("user.displayName: " + user.displayName);
+  console.log("user.id: " + user.id);
   //
   pool.query('INSERT INTO users (username, name, handle) VALUES ($1, $2, $3) RETURNING id', [
     user.name,
