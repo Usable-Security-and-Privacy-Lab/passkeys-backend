@@ -84,14 +84,13 @@ router.post('/login/public-key', passport.authenticate('webauthn', {
   failWithError: true
 }), function(req, res, next) {
   //
-  console.log("In /login/public-key after passport.authenticate");
+  console.log("In /login/public-key after passport.authenticate. Request body:");
   console.log(req.body)
-  console.log("/login/public-key after passport.authenticate")
   //
-  res.json({ ok: true, location: '/' });
+  res.json({ ok: true, username: req.username });
 }, function(err, req, res, next) {
   //
-  console.log("In /login/public-key after passport.authenticate ERROR FUNC");
+  console.log("In /login/public-key after passport.authenticate ERROR FUNC. Request body:");
   console.log(req.body)
   console.log(err)
   //
