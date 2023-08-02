@@ -10,7 +10,6 @@ const PgSession = require('connect-pg-simple')(session);
 var passport = require('passport');
 var logger = require('morgan');
 var pool = require('./db');
-var cors = require('cors'); // TODO: delete? do we need CORS?
 
 var indexRouter = require('./routes/index');
 var authRouter = require('./routes/auth');
@@ -58,7 +57,6 @@ app.use(function(req, res, next) {
   next();
 });
 app.set('trust proxy', true);
-app.use(cors()); // TODO: delete? do we need CORS?
 
 
 app.use('/', indexRouter);
