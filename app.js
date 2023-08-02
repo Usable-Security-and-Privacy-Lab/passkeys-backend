@@ -2,7 +2,7 @@ require('dotenv').config();
 var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
-// var multer  = require('multer'); // TODO: reimplement?
+var multer  = require('multer');
 var cookieParser = require('cookie-parser');
 var session = require('express-session');
 const PgSession = require('connect-pg-simple')(session);
@@ -26,7 +26,7 @@ app.locals.pluralize = require('pluralize');
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-// app.use(multer().none()); // TODO: reimplement?
+app.use(multer().none());
 app.use(cookieParser());
 app.get('/.well-known/apple-app-site-association', (req, res) => {
   // Send the AASA with correct Content-Type
