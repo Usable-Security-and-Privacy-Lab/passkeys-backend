@@ -51,4 +51,12 @@ pool.query(`
   }
 });
 
+// pool.query(`
+//   CREATE TABLE IF NOT EXISTS authtoken (
+//     id SERIAL PRIMARY KEY,
+//     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+//     token TEXT UNIQUE
+//   )
+// `)
+
 module.exports = pool;

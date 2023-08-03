@@ -1,5 +1,5 @@
 var express = require('express');
-var ensureLogIn = require('connect-ensure-login').ensureLoggedIn;
+var ensureLogIn = require('connect-ensure-login').ensureLoggedIn();
 var pool = require('../db');
 
 var ensureLoggedIn = ensureLogIn();
@@ -28,6 +28,14 @@ function fetchTodos(req, res, next) {
 }
 
 var router = express.Router();
+
+router.get('/checkAuthentication', function(req, res, next) {
+  if (req.isAuthenticated()) {
+    res.sendStatus(200);
+  } else {
+    res.sendStatus(401)
+  }
+});
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
