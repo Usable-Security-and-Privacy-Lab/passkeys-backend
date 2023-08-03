@@ -30,6 +30,7 @@ function fetchTodos(req, res, next) {
 var router = express.Router();
 
 router.get('/checkAuthentication', function(req, res, next) {
+  console.log("/checkAuthentication - User:" + req.user);
   if (req.isAuthenticated()) {
     res.sendStatus(200);
   } else {
