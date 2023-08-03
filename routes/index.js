@@ -1,5 +1,5 @@
 var express = require('express');
-var ensureLogIn = require('connect-ensure-login').ensureLoggedIn();
+var ensureLogIn = require('connect-ensure-login').ensureLoggedIn;
 var pool = require('../db');
 
 var ensureLoggedIn = ensureLogIn();
