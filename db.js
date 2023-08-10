@@ -58,21 +58,21 @@ pool.query(`
     username TEXT UNIQUE NOT NULL,
     first_name TEXT,
     last_name TEXT,
-    balance REAL DEFAULT 1000.00
+    balance REAL DEFAULT 500.00
   )
 `);
 
 pool.query(`
   CREATE TABLE IF NOT EXISTS transactions (
     id SERIAL PRIMARY KEY,
-    payer_id INTEGER NOT NULL,
-    payee_id INTEGER NOT NULL,
+    actor_id INTEGER NOT NULL,
+    target_id INTEGER NOT NULL,
     amount REAL NOT NULL,
     action TEXT NOT NULL,
     status TEXT NOT NULL,
     note TEXT NOT NULL,
-    date_created INTEGER NOT NULL,
-    date_completed INTEGER,
+    date_created BIGINT NOT NULL,
+    date_completed BIGINT,
     audience TEXT NOT NULL
   )
 `);
@@ -136,10 +136,50 @@ function getRelationshipRow(id1, id2) {
   });
 };
 
+function insertTransaction(actor_id, target_id, amount, action, status, note, audience = "public") {
+  let date_created = Date.now()/1000;
+  let date_completed = null;
+  if (action === "pay") {
+    date_completed = Date.now()/1000;
+  }
+
+  pool.query(`INSERT INTO transactions 
+    (actor_id, target_id, amount, action, status, note, date_created, date_completed, audience) 
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`, // TODO: returning date? 
+    [actor_id, target_id, amount, action, status, note, date_created, date_completed, audience], (err, result) => {
+    if (err) {
+      console.error(err);
+      return null
+    }
+    return [date_created, date_completed];
+  });
+};
+
+function updateBalance(id, newBalance) {
+  pool.query(`UPDATE profiles SET balance = $1 WHERE id = $2`, [newBalance, id], (err, result) => {
+    if (err) {
+      console.error(err);
+      return null
+    }
+    return result.rows[0];
+  });
+}
+
+function getRecentTransactions() {
+  // TODO:
+}
+
+function completeTransaction() {
+  // TODO:
+};
+
 module.exports = {
   pool: pool,
   getUserByID: getUserByID,
   getProfileByID: getProfileByID,
   getFriendsByID: getFriendsByID,
   getRelationshipRow: getRelationshipRow,
+  insertTransaction: insertTransaction,
+  updateBalance: updateBalance,
+  completeTransaction: completeTransaction,
 };
