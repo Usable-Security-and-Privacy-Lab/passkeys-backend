@@ -32,10 +32,10 @@ passport.use(new WebAuthnStrategy({ store: store }, function verify(id, userHand
 }, function register(user, id, publicKey, cb) {
   //
   console.log("In register");
-  console.log("id: " + id);
+  console.log("id: (will insert in DB as handle)" + id);
   console.log("publicKey: " + publicKey);
-  console.log("user.name: " + user.name);
-  console.log("user.displayName: " + user.displayName);
+  console.log("user.name: (will insert in DB as username)" + user.name); // TODO: rename user.name to user.username for consistency/less confusion
+  console.log("user.displayName: (will insert in DB as name)" + user.displayName); // TODO: ensure displayName naming is consistent throughout code
   console.log("user.id: " + user.id);
   //
   pool.query('INSERT INTO users (username, name, handle) VALUES ($1, $2, $3) RETURNING id', [
@@ -45,15 +45,18 @@ passport.use(new WebAuthnStrategy({ store: store }, function verify(id, userHand
   ], function(err, result) {
     if (err) { return cb(err); }
     var newUser = {
-      id: result.rows[0].id,
+      id: result.rows[0].id, // id from users table
       username: user.name,
       name: user.displayName
     };
     pool.query('INSERT INTO public_key_credentials (user_id, external_id, public_key) VALUES ($1, $2, $3)', [
-      newUser.id,
-      id,
+      newUser.id, // id in users table
+      id, // handle in users table
       publicKey
     ], function(err) {
+      if (err) { return cb(err); }
+    });
+    pool.query('INSERT INTO profiles (user_id, username) VALUES ($1, $2)', [newUser.id, newUser.username], function(err) {
       if (err) { return cb(err); }
       return cb(null, newUser);
     });

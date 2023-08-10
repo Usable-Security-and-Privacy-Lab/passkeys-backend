@@ -40,7 +40,12 @@ app.use(session({
   store: new PgSession({
     pool: pool,
     createTableIfMissing: true
-  })
+  }),
+  cookie: {
+    httpOnly: true,
+    secure: true
+    // SameSite: ??? // TODO:
+  }
 }));
 //app.use(csrf());
 app.use(passport.authenticate('session'));
