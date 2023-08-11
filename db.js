@@ -62,7 +62,7 @@ pool.query(`
   )
 `, (err) => {
   if (err) {
-    console.error('Error creating "todos" table:', err);
+    console.error('Error creating "profiles" table:', err);
   }
 });
 
@@ -82,7 +82,7 @@ pool.query(`
   )
 `, (err) => {
   if (err) {
-    console.error('Error creating "todos" table:', err);
+    console.error('Error creating "transactions" table:', err);
   }
 });
 
@@ -94,7 +94,7 @@ pool.query(`
   )
 `, (err) => {
   if (err) {
-    console.error('Error creating "todos" table:', err);
+    console.error('Error creating "friends" table:', err);
   }
 });
 
