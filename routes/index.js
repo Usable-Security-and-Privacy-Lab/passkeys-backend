@@ -96,6 +96,7 @@ router.get('/profiles/:userID', function (req, res, next) {
 });
 
 // TODO: Friend list privacy settings
+// TODO: incrementally load friends?
 // Get friends of a user
 router.get('/profiles/:userID/friends', function (req, res, next) {
   const friends = db.getFriendsByID(req.params.userID);

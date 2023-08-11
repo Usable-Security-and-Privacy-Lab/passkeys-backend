@@ -54,11 +54,11 @@ pool.query(`
 
 pool.query(`
   CREATE TABLE IF NOT EXISTS profiles (
-    user_id PRIMARY KEY INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id INTEGER PRIMARY KEY NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     username TEXT UNIQUE NOT NULL,
     first_name TEXT,
     last_name TEXT,
-    balance REAL DEFAULT 500.00
+    balance DECIMAL(15,2) DEFAULT 500.00
   )
 `);
 
