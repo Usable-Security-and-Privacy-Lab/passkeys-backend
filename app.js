@@ -9,7 +9,7 @@ const PgSession = require('connect-pg-simple')(session);
 // var csrf = require('csurf');
 var passport = require('passport');
 var logger = require('morgan');
-var pool = require('./db');
+var pool = require('./db').pool;
 
 var indexRouter = require('./routes/index');
 var authRouter = require('./routes/auth');

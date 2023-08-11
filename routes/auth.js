@@ -4,7 +4,7 @@ var WebAuthnStrategy = require('passport-fido2-webauthn');
 var SessionChallengeStore = require('passport-fido2-webauthn').SessionChallengeStore;
 var base64url = require('base64url');
 var uuid = require('uuid').v4;
-var pool = require('../db');
+var pool = require('../db').pool;
 
 var store = new SessionChallengeStore();
 
