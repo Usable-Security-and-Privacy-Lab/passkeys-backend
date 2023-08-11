@@ -2,7 +2,7 @@ var express = require('express');
 var db = require('../db');
 
 var router = express.Router();
-router.use('/', secureRouter); // TODO: Path
+
 var secureRouter = express.Router(); // TODO: Merge URL params?
 secureRouter.use((req, res, next) => {
   console.log("index.js auth router middleware - User:" + req.user);
@@ -12,6 +12,8 @@ secureRouter.use((req, res, next) => {
     return res.sendStatus(401);
   }
 });
+
+router.use('/', secureRouter); // TODO: Path
 
 /* GET home page. */
 router.get('/', function (req, res, next) {
