@@ -16,7 +16,7 @@ secureRouter.use((req, res, next) => {
 router.use('/', secureRouter); // TODO: Path
 
 function fetchTodos(req, res, next) {
-  pool.query('SELECT * FROM todos WHERE owner_id = $1', [
+  db.query('SELECT * FROM todos WHERE owner_id = $1', [
     req.user.id
   ], function(err, result) {
     if (err) { return next(err); }
