@@ -60,7 +60,12 @@ pool.query(`
     last_name TEXT,
     balance DECIMAL(15,2) DEFAULT 500.00
   )
-`);
+`, (err) => {
+  if (err) {
+    console.error('Error creating "todos" table:', err);
+  }
+});
+
 
 pool.query(`
   CREATE TABLE IF NOT EXISTS transactions (
@@ -75,7 +80,11 @@ pool.query(`
     date_completed BIGINT,
     audience TEXT NOT NULL
   )
-`);
+`, (err) => {
+  if (err) {
+    console.error('Error creating "todos" table:', err);
+  }
+});
 
 pool.query(`
   CREATE TABLE IF NOT EXISTS friends (
@@ -83,7 +92,11 @@ pool.query(`
     user2_id INTEGER NOT NULL,
     relationship TEXT NOT NULL
   )
-`);
+`, (err) => {
+  if (err) {
+    console.error('Error creating "todos" table:', err);
+  }
+});
 
 // TODO: Implement comments
 // pool.query(`
