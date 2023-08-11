@@ -1,5 +1,5 @@
 var express = require('express');
-var db = require('../db');
+var { pool } = require('../pool');
 
 var router = express.Router();
 
@@ -16,7 +16,8 @@ secureRouter.use((req, res, next) => {
 router.use('/', secureRouter); // TODO: Path
 
 function fetchTodos(req, res, next) {
-  db.query('SELECT * FROM todos WHERE owner_id = $1', [
+  console.log("index.js fetchTodos - User:" + req.user); // TODO: remove
+  pool.query('SELECT * FROM todos WHERE owner_id = $1', [
     req.user.id
   ], function(err, result) {
     if (err) { return next(err); }
@@ -58,7 +59,7 @@ secureRouter.get('/checkAuthentication', function (req, res, next) {
 
 // Get info on current user
 secureRouter.get('/me', function (req, res, next) {
-  const profile = db.getProfileByID(req.user.id);
+  const profile = pool.getProfileByID(req.user.id);
   if (profile == null) {
     return res.sendStatus(500);
   } else if (profile === undefined) {
@@ -84,7 +85,7 @@ secureRouter.get('/me', function (req, res, next) {
 
 // Get info on a user
 router.get('/profiles/:userID', function (req, res, next) {
-  const profile = db.getProfileByID(req.params.userID);
+  const profile = pool.getProfileByID(req.params.userID);
   if (profile == null) {
     return res.sendStatus(500);
   } else if (profile === undefined) {
@@ -93,7 +94,7 @@ router.get('/profiles/:userID', function (req, res, next) {
 
   let relationship;
   if (req.isAuthenticated()) {
-    const relationshipRow = db.getRelationshipRow(req.user.id, req.params.userID);
+    const relationshipRow = pool.getRelationshipRow(req.user.id, req.params.userID);
     if (relationshipRow == null) {
       return res.sendStatus(500);
     } else if (relationshipRow === undefined) {
@@ -124,7 +125,7 @@ router.get('/profiles/:userID', function (req, res, next) {
 // TODO: incrementally load friends?
 // Get friends of a user
 router.get('/profiles/:userID/friends', function (req, res, next) {
-  const friends = db.getFriendsByID(req.params.userID);
+  const friends = pool.getFriendsByID(req.params.userID);
   if (friends == null) {
     return res.sendStatus(404);
   }
@@ -154,7 +155,7 @@ secureRouter.post('/transactions', function (req, res, next) {
     return res.sendStatus(400).json({ "error": "Missing required fields" });
   }
 
-  if (db.getProfileByID(req.body.payeeID) === undefined) {
+  if (pool.getProfileByID(req.body.payeeID) === undefined) {
     return res.sendStatus(404).json({ "error": "Payee profile not found" });
   }
 
@@ -163,7 +164,7 @@ secureRouter.post('/transactions', function (req, res, next) {
     action = "pay";
   }
 
-  let balance = db.getProfileByID(req.user.id).balance;
+  let balance = pool.getProfileByID(req.user.id).balance;
   let status = "pending";
 
   if (action === "pay") {
@@ -184,13 +185,13 @@ secureRouter.post('/transactions', function (req, res, next) {
     audience = "public";
   }
 
-  let dates = db.insertTransaction(req.user.id, req.body.target_id, req.body.amount, action, status, note, req.body.audience)
+  let dates = pool.insertTransaction(req.user.id, req.body.target_id, req.body.amount, action, status, note, req.body.audience)
   if (dates == null) {
     return res.sendStatus(500);
   }
 
   if (action === "pay") {
-    db.updateBalance(req.user.id, balance);
+    pool.updateBalance(req.user.id, balance);
   }
 
   const json = {
@@ -249,11 +250,11 @@ secureRouter.get('/transactions', function (req, res, next) {
   let transactions;
   switch (feed) {
     case "friends":
-      let friendIDs = db.getFriendsByID(req.user.id).map(friend => friend.id);
+      let friendIDs = pool.getFriendsByID(req.user.id).map(friend => friend.id);
       if (friendIDs == null) {
         return res.sendStatus(404).json({ "error": "No friends found for the current user" });
       } else {
-        transactions = db.getTransactionsForFriendsFeed(friendIDs, req.user.id, req.body.before, req.body.after, limit, lastTransactionID);
+        transactions = pool.getTransactionsForFriendsFeed(friendIDs, req.user.id, req.body.before, req.body.after, limit, lastTransactionID);
       }
       break;
     case "user":
@@ -262,11 +263,11 @@ secureRouter.get('/transactions', function (req, res, next) {
       }
 
       if (req.body.partyID === req.user.id) {
-        transactions = db.getMyRecentTransactions(req.user.id, req.body.before, req.body.after, limit, lastTransactionID);
-      } else if (db.getRelationshipRow(req.user.id, req.body.partyID).relationship === "friend") {
-        transactions = db.getTransactionFeedOfFriend(req.user.id, req.body.partyID, req.body.before, req.body.after, limit, lastTransactionID);
+        transactions = pool.getMyRecentTransactions(req.user.id, req.body.before, req.body.after, limit, lastTransactionID);
+      } else if (pool.getRelationshipRow(req.user.id, req.body.partyID).relationship === "friend") {
+        transactions = pool.getTransactionFeedOfFriend(req.user.id, req.body.partyID, req.body.before, req.body.after, limit, lastTransactionID);
       } else { // any other user
-        transactions = db.getTransactionFeedOfUser(req.user.id, req.body.partyID, req.body.before, req.body.after, limit, lastTransactionID);
+        transactions = pool.getTransactionFeedOfUser(req.user.id, req.body.partyID, req.body.before, req.body.after, limit, lastTransactionID);
       }
       break;
     case "betweenUs":
@@ -274,7 +275,7 @@ secureRouter.get('/transactions', function (req, res, next) {
         return res.sendStatus(400).json({ "error": "No partyID specified" });
       }
 
-      transactions = db.getTransactionsBetweenUsers(req.user.id, req.body.partyID, req.body.before, req.body.after, limit, lastTransactionID);
+      transactions = pool.getTransactionsBetweenUsers(req.user.id, req.body.partyID, req.body.before, req.body.after, limit, lastTransactionID);
       break;
   }
 
@@ -320,12 +321,12 @@ secureRouter.get('/transactions/outstanding', function (req, res, next) {
     lastTransactionID = null;
   }
 
-  let transactions = db.getOutstandingTransactions(req.user.id, req.body.before, req.body.after, limit, lastTransactionID);
+  let transactions = pool.getOutstandingTransactions(req.user.id, req.body.before, req.body.after, limit, lastTransactionID);
 });
 
 // Get info on a transaction
 secureRouter.get('/transactions/:transactionID', function (req, res, next) {
-  const transaction = db.getTransactionByID(req.params.transactionID);
+  const transaction = pool.getTransactionByID(req.params.transactionID);
   if (transaction == null) {
     return res.sendStatus(404).json({ "error": "Transaction not found" });
   }
@@ -336,7 +337,7 @@ secureRouter.get('/transactions/:transactionID', function (req, res, next) {
       allowAccess = true;
       break;
     case "friends":
-      if (db.getRelationshipRow(req.user.id, transaction.actor_id).relationship === "friend") {
+      if (pool.getRelationshipRow(req.user.id, transaction.actor_id).relationship === "friend") {
         allowAccess = true;
       }
       break;
@@ -374,7 +375,7 @@ secureRouter.put('/transactions/:transactionID', function (req, res, next) {
     return res.sendStatus(400).json({ "error": "Invalid/missing action" });
   }
 
-  const transaction = db.getTransactionByID(req.params.transactionID);
+  const transaction = pool.getTransactionByID(req.params.transactionID);
 
   if (transaction == null) {
     return res.sendStatus(404).json({ "error": "Transaction not found" });
@@ -387,24 +388,24 @@ secureRouter.put('/transactions/:transactionID', function (req, res, next) {
       if (transaction.target_id !== req.user.id) {
         return res.sendStatus(401).json({ "error": "Unauthorized" });
       } else {
-        const balance = db.getProfileByID(req.user.id).balance;
+        const balance = pool.getProfileByID(req.user.id).balance;
         if (balance < transaction.amount) {
           return res.sendStatus(400).json({ "error": "Insufficient funds" });
         }
 
-        transaction = db.updateTransactionStatus(req.params.transactionID, "settled");
-        db.updateBalance(transaction.target_id, transaction.amount); // TODO: verify this worked, rollback if not?
+        transaction = pool.updateTransactionStatus(req.params.transactionID, "settled");
+        pool.updateBalance(transaction.target_id, transaction.amount); // TODO: verify this worked, rollback if not?
       }
       break;
     case "deny":
       if (transaction.target_id !== req.user.id) {
         return res.sendStatus(401).json({ "error": "Unauthorized" });
       } else {
-        transaction = db.updateTransactionStatus(req.params.transactionID, "denied");
+        transaction = pool.updateTransactionStatus(req.params.transactionID, "denied");
       }
       break;
     case "cancel":
-      transaction = db.updateTransactionStatus(req.params.transactionID, "cancelled");
+      transaction = pool.updateTransactionStatus(req.params.transactionID, "cancelled");
       break;
   }
 
