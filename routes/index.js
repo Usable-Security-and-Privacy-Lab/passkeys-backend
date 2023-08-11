@@ -1,5 +1,5 @@
 var express = require('express');
-var { pool } = require('../pool');
+var { pool } = require('../db');
 
 var router = express.Router();
 
