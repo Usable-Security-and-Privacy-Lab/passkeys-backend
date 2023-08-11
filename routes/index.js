@@ -1,5 +1,5 @@
 var express = require('express');
-var pool = require('../db');
+var db = require('../db');
 
 var router = express.Router();
 router.use('/', secureRouter); // TODO: Path
@@ -9,7 +9,7 @@ secureRouter.use((req, res, next) => {
   if (req.isAuthenticated()) {
     next();
   } else {
-    res.sendStatus(401);
+    return res.sendStatus(401);
   }
 });
 
@@ -19,25 +19,25 @@ router.get('/', function (req, res, next) {
   next();
 }, fetchTodos, function (req, res, next) {
   res.locals.filter = null;
-  res.render('index', { user: req.user });
+  return res.render('index', { user: req.user });
 });
 
 secureRouter.get('/checkAuthentication', function (req, res, next) {
   console.log("/checkAuthentication - User:" + req.user);
   if (req.isAuthenticated()) {
-    res.sendStatus(200);
+    return res.sendStatus(200);
   } else {
-    res.sendStatus(401)
+    return res.sendStatus(401)
   }
 });
 
 // Get info on current user
 secureRouter.get('/me', function (req, res, next) {
-  const profile = pool.getProfileByID(req.user.id);
+  const profile = db.getProfileByID(req.user.id);
   if (profile == null) {
-    res.sendStatus(500);
+    return res.sendStatus(500);
   } else if (profile === undefined) {
-    res.sendStatus(404);
+    return res.sendStatus(404);
   }
 
   const numFriends = getFriendsByID(req.user.id).length;
@@ -45,32 +45,32 @@ secureRouter.get('/me', function (req, res, next) {
   const json = {
     "profile": {
       "username": req.user.username,
-      "first_name": profile.first_name,
-      "last_name": profile.last_name,
-      "display_name": profile.first_name + " " + profile.last_name,
+      "firstName": profile.first_name,
+      "lastName": profile.last_name,
+      "displayName": profile.first_name + " " + profile.last_name,
       "relationship": "me",
-      "friends_count": numFriends,
+      "friendsCount": numFriends,
       "id": req.user.id,
       "balance": profile.balance
     }
   }
-  res.status(200).json(json);
+  return res.status(200).json(json);
 });
 
 // Get info on a user
-router.get('/profiles/:user_id', function (req, res, next) {
-  const profile = pool.getProfileByID(req.params.user_id);
+router.get('/profiles/:userID', function (req, res, next) {
+  const profile = db.getProfileByID(req.params.userID);
   if (profile == null) {
-    res.sendStatus(500);
+    return res.sendStatus(500);
   } else if (profile === undefined) {
-    res.sendStatus(404);
+    return res.sendStatus(404);
   }
 
   let relationship;
   if (req.isAuthenticated()) {
-    const relationshipRow = pool.getRelationshipRow(req.user.id, req.params.user_id);
+    const relationshipRow = db.getRelationshipRow(req.user.id, req.params.userID);
     if (relationshipRow == null) {
-      res.sendStatus(500);
+      return res.sendStatus(500);
     } else if (relationshipRow === undefined) {
       relationship = "none";
     } else {
@@ -80,26 +80,27 @@ router.get('/profiles/:user_id', function (req, res, next) {
     relationship = "unknown";
   }
 
-  const numFriends = getFriendsByID(req.params.user_id)?.length; // TODO: error handling
+  const numFriends = getFriendsByID(req.params.userID)?.length; // TODO: error handling
 
   const json = {
     "profile": {
       "username": profile.username,
-      "first_name": profile.first_name,
-      "last_name": profile.last_name,
-      "display_name": profile.first_name + " " + profile.last_name,
+      "firstName": profile.first_name,
+      "lastName": profile.last_name,
+      "displayName": profile.first_name + " " + profile.last_name,
       "relationship": relationship,
-      "friends_count": numFriends,
+      "friendsCount": numFriends,
       "id": req.user.id
     }
   }
 });
 
+// TODO: Friend list privacy settings
 // Get friends of a user
-router.get('/profiles/:user_id/friends', function (req, res, next) {
-  const friends = pool.getFriendsByID(req.params.user_id);
+router.get('/profiles/:userID/friends', function (req, res, next) {
+  const friends = db.getFriendsByID(req.params.userID);
   if (friends == null) {
-    res.sendStatus(404);
+    return res.sendStatus(404);
   }
 
   const json = {
@@ -109,25 +110,26 @@ router.get('/profiles/:user_id/friends', function (req, res, next) {
   for (const friend in friends) {
     json.friends.push({
       "username": friend.username,
-      "first_name": friend.first_name,
-      "last_name": friend.last_name,
-      "display_name": friend.first_name + " " + friend.last_name,
+      "firstName": friend.first_name,
+      "lastName": friend.last_name,
+      "displayName": friend.first_name + " " + friend.last_name,
       "id": friend.id
     });
   }
 });
 
-// Payments/Transactions
+// TODO: validate input
+// Transactions
 
-// Make a payment/charge
+// Initiate a transaction
 // TODO: do we need to send transaction in response?
-secureRouter.post('/payments', function (req, res, next) {
-  if (req.body.target_id == null || req.body.amount == null || req.body.note == null) {
-    return
+secureRouter.post('/transactions', function (req, res, next) {
+  if (req.body.targetID == null || req.body.amount == null || req.body.note == null) {
+    return res.sendStatus(400).json({ "error": "Missing required fields" });
   }
 
-  if (pool.getProfileByID(req.body.payee_id) === undefined) {
-    res.sendStatus(404).json({ "error": "Payee profile not found" });
+  if (db.getProfileByID(req.body.payeeID) === undefined) {
+    return res.sendStatus(404).json({ "error": "Payee profile not found" });
   }
 
   let action = req.body.action;
@@ -135,13 +137,13 @@ secureRouter.post('/payments', function (req, res, next) {
     action = "pay";
   }
 
-  let balance = pool.getProfileByID(req.user.id).balance;
+  let balance = db.getProfileByID(req.user.id).balance;
   let status = "pending";
 
   if (action === "pay") {
     status = "settled";
     if (balance < req.body.amount) {
-      res.sendStatus(400).json({ "error": "Insufficient funds" });
+      return res.sendStatus(400).json({ "error": "Insufficient funds" });
     }
     balance -= req.body.amount;
   }
@@ -156,37 +158,38 @@ secureRouter.post('/payments', function (req, res, next) {
     audience = "public";
   }
 
-  let dates = pool.insertTransaction(req.user.id, req.body.target_id, req.body.amount, action, status, note, req.body.audience)
+  let dates = db.insertTransaction(req.user.id, req.body.target_id, req.body.amount, action, status, note, req.body.audience)
   if (dates == null) {
-    res.sendStatus(500);
+    return res.sendStatus(500);
   }
 
   if (action === "pay") {
-    pool.updateBalance(req.user.id, balance);
+    db.updateBalance(req.user.id, balance);
   }
 
   const json = {
     "balance": balance,
-    "payment": {
-      "actor_id": req.user.id,
-      "target_id": req.body.target_id,
+    "transaction": {
+      "actorID": req.user.id,
+      "targetID": req.body.target_id,
       "amount": req.body.amount,
       "action": action,
       "status": status,
       "note": note,
-      "date_created": dates[0],
-      "date_completed": dates[1],
+      "dateCreated": dates[0],
+      "dateCompleted": dates[1],
       "audience": audience
     }
   }
 
-  res.status(200).json(json);
+  return res.status(200).json(json);
 });
 
-// List recent payments/charges
-secureRouter.get('/payments', function (req, res, next) {
+// TODO: validate input
+// List recent transactions
+secureRouter.get('/transactions', function (req, res, next) {
   let feed = req.body.feed;
-  if (feed == null && feed !== "global" && feed !== "friends" && feed !== "user") {
+  if (feed == null || (feed !== "friends" && feed !== "user" && feed !== "betweenUs")) {
     feed = "friends";
   }
 
@@ -197,22 +200,202 @@ secureRouter.get('/payments', function (req, res, next) {
     limit = 100;
   }
 
-  switch (feed) {
-    case "global":
-      let friendIDs = pool.getFriendsByID(req.user.id).map(friend => friend.id);
-      
+  let before = req.body.before;
+  if (before == null) {
+    before = Date.now() / 1000;
+  }
+  let after = req.body.after;
+  if (after == null) {
+    after = 0;
   }
 
+  let lastTransactionID = req.body.lastTransactionID;
+  if (lastTransactionID === undefined) {
+    lastTransactionID = null;
+  }
+
+  let json = {
+    "pagination": {
+
+    },
+    "transactions": []
+  }
+  let transactions;
+  switch (feed) {
+    case "friends":
+      let friendIDs = db.getFriendsByID(req.user.id).map(friend => friend.id);
+      if (friendIDs == null) {
+        return res.sendStatus(404).json({ "error": "No friends found for the current user" });
+      } else {
+        transactions = db.getTransactionsForFriendsFeed(friendIDs, req.user.id, req.body.before, req.body.after, limit, lastTransactionID);
+      }
+      break;
+    case "user":
+      if (req.body.partyID == null) {
+        return res.sendStatus(400).json({ "error": "No partyID specified" });
+      }
+
+      if (req.body.partyID === req.user.id) {
+        transactions = db.getMyRecentTransactions(req.user.id, req.body.before, req.body.after, limit, lastTransactionID);
+      } else if (db.getRelationshipRow(req.user.id, req.body.partyID).relationship === "friend") {
+        transactions = db.getTransactionFeedOfFriend(req.user.id, req.body.partyID, req.body.before, req.body.after, limit, lastTransactionID);
+      } else { // any other user
+        transactions = db.getTransactionFeedOfUser(req.user.id, req.body.partyID, req.body.before, req.body.after, limit, lastTransactionID);
+      }
+      break;
+    case "betweenUs":
+      if (req.body.partyID == null) {
+        return res.sendStatus(400).json({ "error": "No partyID specified" });
+      }
+
+      transactions = db.getTransactionsBetweenUsers(req.user.id, req.body.partyID, req.body.before, req.body.after, limit, lastTransactionID);
+      break;
+  }
+
+  if (transactions == null) {
+    return res.sendStatus(500);
+  } else {
+    for (const transaction in transactions) {
+      json.transactions.push({
+        "id": transaction.id,
+        "actorID": transaction.actor_id,
+        "targetID": transaction.target_id,
+        "amount": transaction.amount,
+        "action": transaction.action,
+        "status": transaction.status,
+        "note": transaction.note,
+        "dateCreated": transaction.date_created,
+        "dateCompleted": transaction.date_completed,
+        "audience": transaction.audience
+      });
+    }
+  }
+  json.pagination.lastTransactionID = transactions[transactions.length - 1].id;
+  return res.status(200).json(json);
 });
 
-// Get info on a payment/charge
-secureRouter.get('/payments/:payment_id', function (req, res, next) {
-  // TODO
+secureRouter.get('/transactions/outstanding', function (req, res, next) {
+  let limit = req.body.limit;
+  if (limit == null || limit > 100) {
+    limit = 25;
+  }
+
+  let before = req.body.before;
+  if (before == null) {
+    before = Date.now() / 1000;
+  }
+  let after = req.body.after;
+  if (after == null) {
+    after = 0;
+  }
+
+  let lastTransactionID = req.body.lastTransactionID;
+  if (lastTransactionID === undefined) {
+    lastTransactionID = null;
+  }
+
+  let transactions = db.getOutstandingTransactions(req.user.id, req.body.before, req.body.after, limit, lastTransactionID);
 });
 
-// Complete a payment/charge request
-secureRouter.put('/payments/:payment_id', function (req, res, next) {
-  // TODO
+// Get info on a transaction
+secureRouter.get('/transactions/:transactionID', function (req, res, next) {
+  const transaction = db.getTransactionByID(req.params.transactionID);
+  if (transaction == null) {
+    return res.sendStatus(404).json({ "error": "Transaction not found" });
+  }
+
+  let allowAccess = false;
+  switch (transaction.audience) {
+    case "public":
+      allowAccess = true;
+      break;
+    case "friends":
+      if (db.getRelationshipRow(req.user.id, transaction.actor_id).relationship === "friend") {
+        allowAccess = true;
+      }
+      break;
+    case "private":
+      if (transaction.actor_id === req.user.id || transaction.target_id === req.user.id) {
+        allowAccess = true;
+      }
+      break;
+  }
+
+  if (allowAccess) {
+    return res.json({
+      "transaction": {
+        "id": transaction.id,
+        "actorID": transaction.actor_id,
+        "targetID": transaction.target_id,
+        "amount": transaction.amount,
+        "action": transaction.action,
+        "status": transaction.status,
+        "note": transaction.note,
+        "dateCreated": transaction.date_created,
+        "dateCompleted": transaction.date_completed,
+        "audience": transaction.audience
+      }
+    });
+  } else {
+    return res.sendStatus(401).json({ "error": "Unauthorized" });
+  }
+});
+
+// Complete a transaction request
+secureRouter.put('/transactions/:transactionID', function (req, res, next) {
+  if (req.body.action == null ||
+    (req.body.action !== "approve" && req.body.action !== "deny" && req.body.action !== "cancel")) {
+    return res.sendStatus(400).json({ "error": "Invalid/missing action" });
+  }
+
+  const transaction = db.getTransactionByID(req.params.transactionID);
+
+  if (transaction == null) {
+    return res.sendStatus(404).json({ "error": "Transaction not found" });
+  } else if (transaction.status !== "pending") {
+    return res.sendStatus(400).json({ "error": "Transaction is not pending" });
+  }
+
+  switch (req.body.action) {
+    case "approve":
+      if (transaction.target_id !== req.user.id) {
+        return res.sendStatus(401).json({ "error": "Unauthorized" });
+      } else {
+        const balance = db.getProfileByID(req.user.id).balance;
+        if (balance < transaction.amount) {
+          return res.sendStatus(400).json({ "error": "Insufficient funds" });
+        }
+
+        transaction = db.updateTransactionStatus(req.params.transactionID, "settled");
+        db.updateBalance(transaction.target_id, transaction.amount); // TODO: verify this worked, rollback if not?
+      }
+      break;
+    case "deny":
+      if (transaction.target_id !== req.user.id) {
+        return res.sendStatus(401).json({ "error": "Unauthorized" });
+      } else {
+        transaction = db.updateTransactionStatus(req.params.transactionID, "denied");
+      }
+      break;
+    case "cancel":
+      transaction = db.updateTransactionStatus(req.params.transactionID, "cancelled");
+      break;
+  }
+
+  return res.json({
+    "transaction": {
+      "id": transaction.id,
+      "actorID": transaction.actor_id,
+      "targetID": transaction.target_id,
+      "amount": transaction.amount,
+      "action": transaction.action,
+      "status": transaction.status,
+      "note": transaction.note,
+      "dateCreated": transaction.date_created,
+      "dateCompleted": transaction.date_completed,
+      "audience": transaction.audience
+    }
+  });
 });
 
 module.exports = secureRouter;
