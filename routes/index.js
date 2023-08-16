@@ -381,9 +381,8 @@ router.get('/transactions', isAuthenticated, function (req, res, next) {
     for (const transaction in transactions) {
       let actor = db.getProfileByID(transaction.actor_id);
       let target = db.getProfileByID(transaction.target_id);
-      json.transactions.push({
+      let transactionJSON = {
         "id": transaction.id,
-        "amount": transaction.amount,
         "action": transaction.action,
         "status": transaction.status,
         "note": transaction.note,
@@ -404,7 +403,11 @@ router.get('/transactions', isAuthenticated, function (req, res, next) {
           "lastName": target.last_name,
           "displayName": target.first_name + " " + target.last_name
         }
-      });
+      }
+      if (transaction.actor_id === req.user.id || transaction.target_id === req.user.id) {
+        transactionJSON.amount = transaction.amount;
+      }
+      json.transactions.push(transactionJSON);
     }
   }
   json.pagination.lastTransactionID = transactions[transactions.length - 1].id;
@@ -500,9 +503,8 @@ router.get('/transactions/:transactionID', isAuthenticated, function (req, res, 
   if (allowAccess) {
     let actor = db.getProfileByID(transaction.actor_id);
     let target = db.getProfileByID(transaction.target_id);
-    return res.json({
+    let transactionJSON = {
       "id": transaction.id,
-      "amount": transaction.amount,
       "action": transaction.action,
       "status": transaction.status,
       "note": transaction.note,
@@ -523,7 +525,11 @@ router.get('/transactions/:transactionID', isAuthenticated, function (req, res, 
         "lastName": target.last_name,
         "displayName": target.first_name + " " + target.last_name
       }
-    });
+    };
+    if (transaction.actor_id === req.user.id || transaction.target_id === req.user.id) {
+      transactionJSON.amount = transaction.amount;
+    }
+    return res.json(transactionJSON);
   } else {
     return res.sendStatus(401).json({ "error": "Unauthorized" });
   }
