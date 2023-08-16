@@ -199,13 +199,14 @@ function insertTransaction(actor_id, target_id, amount, action, status, note, au
 
   pool.query(`INSERT INTO transactions 
     (actor_id, target_id, amount, action, status, note, date_created, date_completed, audience) 
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`, // TODO: returning date? 
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    RETURNING id, date_created, date_completed`,
     [actor_id, target_id, amount, action, status, note, date_created, date_completed, audience], (err, result) => {
       if (err) {
         console.error(err);
         return null
       }
-      return [date_created, date_completed];
+      return result.rows[0];
     });
 };
 

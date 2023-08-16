@@ -75,7 +75,7 @@ router.get('/me', isAuthenticated, function (req, res, next) {
       "balance": profile.balance
     }
   }
-  return res.status(200).json(json);
+  return res.json(json);
 });
 
 // Get info on a user
@@ -89,33 +89,37 @@ router.get('/profiles/:userID', function (req, res, next) {
 
   let relationship;
   if (req.isAuthenticated()) {
-    const relationshipRow = db.getRelationshipRow(req.user.id, req.params.userID);
-    if (relationshipRow == null) {
-      return res.sendStatus(500);
-    } else if (relationshipRow === undefined) {
-      relationship = "none";
+    if (req.params.userID === req.user.id) {
+      relationship = "me";
     } else {
-      if (relationshipRow.relationship === "friend") {
-        relationship = "friend";
-      } else { // requested
-        let user1IsMe;
-        if (relationshipRow.user1_id === req.user.id) {
-          user1IsMe = true;
-        } else {
-          user1IsMe = false;
-        }
-
-        if (user1IsMe) {
-          if (relationshipRow.relationship === "user1Requested") {
-            relationship = "youRequested";
+      const relationshipRow = db.getRelationshipRow(req.user.id, req.params.userID);
+      if (relationshipRow == null) {
+        return res.sendStatus(500);
+      } else if (relationshipRow === undefined) {
+        relationship = "none";
+      } else {
+        if (relationshipRow.relationship === "friend") {
+          relationship = "friend";
+        } else { // requested
+          let user1IsMe;
+          if (relationshipRow.user1_id === req.user.id) {
+            user1IsMe = true;
           } else {
-            relationship = "theyRequested";
+            user1IsMe = false;
           }
-        } else { // user2 is me
-          if (relationshipRow.relationship === "user2Requested") {
-            relationship = "youRequested";
-          } else {
-            relationship = "theyRequested";
+
+          if (user1IsMe) {
+            if (relationshipRow.relationship === "user1Requested") {
+              relationship = "youRequested";
+            } else {
+              relationship = "theyRequested";
+            }
+          } else { // user2 is me
+            if (relationshipRow.relationship === "user2Requested") {
+              relationship = "youRequested";
+            } else {
+              relationship = "theyRequested";
+            }
           }
         }
       }
@@ -137,8 +141,15 @@ router.get('/profiles/:userID', function (req, res, next) {
       "id": req.user.id
     }
   }
+
+  if (req.params.userID === req.user.id) {
+    json.profile.balance = profile.balance;
+  }
+
+  return res.json(json);
 });
 
+// Add or remove a friend
 router.post('/profiles/:userID', isAuthenticated, function (req, res, next) {
   if (req.params.userID === req.user.id) {
     return res.sendStatus(400).json({ "error": "Cannot add self as friend" });
@@ -259,8 +270,8 @@ router.post('/transactions', isAuthenticated, function (req, res, next) {
     audience = "public";
   }
 
-  let dates = db.insertTransaction(req.user.id, req.body.target_id, req.body.amount, action, status, note, req.body.audience)
-  if (dates == null) {
+  let transactionRow = db.insertTransaction(req.user.id, req.body.target_id, req.body.amount, action, status, note, req.body.audience)
+  if (transactionRow == null) {
     return res.sendStatus(500);
   }
 
@@ -268,22 +279,35 @@ router.post('/transactions', isAuthenticated, function (req, res, next) {
     db.updateBalance(req.user.id, balance);
   }
 
+  let actor = db.getProfileByID(req.user.id);
+  let target = db.getProfileByID(req.body.target_id);
+
   const json = {
+    "id": transactionRow.id,
     "balance": balance,
-    "transaction": {
-      "actorID": req.user.id,
-      "targetID": req.body.target_id,
-      "amount": req.body.amount,
-      "action": action,
-      "status": status,
-      "note": note,
-      "dateCreated": dates[0],
-      "dateCompleted": dates[1],
-      "audience": audience
+    "amount": req.body.amount,
+    "action": action,
+    "status": status,
+    "note": note,
+    "dateCreated": transactionRow.date_created,
+    "dateCompleted": transactionRow.date_completed,
+    "audience": audience,
+    "actor": {
+      "id": req.user.id,
+      "username": actor.username,
+      "firstName": actor.first_name,
+      "lastName": actor.last_name,
+      "displayName": actor.first_name + " " + actor.last_name
+    },
+    "target": {
+      "id": req.body.target_id,
+      "username": target.username,
+      "firstName": target.first_name,
+      "lastName": target.last_name,
+      "displayName": target.first_name + " " + target.last_name
     }
   }
-
-  return res.status(200).json(json);
+  return res.json(json);
 });
 
 // TODO: validate input
@@ -316,10 +340,8 @@ router.get('/transactions', isAuthenticated, function (req, res, next) {
   }
 
   let json = {
-    "pagination": {
-
-    },
-    "transactions": []
+    "pagination": {},
+    "data": []
   }
   let transactions;
   switch (feed) {
@@ -357,22 +379,36 @@ router.get('/transactions', isAuthenticated, function (req, res, next) {
     return res.sendStatus(500);
   } else {
     for (const transaction in transactions) {
+      let actor = db.getProfileByID(transaction.actor_id);
+      let target = db.getProfileByID(transaction.target_id);
       json.transactions.push({
         "id": transaction.id,
-        "actorID": transaction.actor_id,
-        "targetID": transaction.target_id,
         "amount": transaction.amount,
         "action": transaction.action,
         "status": transaction.status,
         "note": transaction.note,
         "dateCreated": transaction.date_created,
         "dateCompleted": transaction.date_completed,
-        "audience": transaction.audience
+        "audience": transaction.audience,
+        "actor": {
+          "id": transaction.actor_id,
+          "username": actor.username,
+          "firstName": actor.first_name,
+          "lastName": actor.last_name,
+          "displayName": actor.first_name + " " + actor.last_name
+        },
+        "target": {
+          "id": transaction.target_id,
+          "username": target.username,
+          "firstName": target.first_name,
+          "lastName": target.last_name,
+          "displayName": target.first_name + " " + target.last_name
+        }
       });
     }
   }
   json.pagination.lastTransactionID = transactions[transactions.length - 1].id;
-  return res.status(200).json(json);
+  return res.json(json);
 });
 
 router.get('/transactions/outstanding', isAuthenticated, function (req, res, next) {
@@ -396,6 +432,45 @@ router.get('/transactions/outstanding', isAuthenticated, function (req, res, nex
   }
 
   let transactions = db.getOutstandingTransactions(req.user.id, req.body.before, req.body.after, limit, lastTransactionID);
+  if (transactions == null) {
+    return res.sendStatus(500);
+  } else {
+    let json = {
+      "pagination": {},
+      "data": []
+    };
+
+    for (const transaction in transactions) {
+      let actor = db.getProfileByID(transaction.actor_id);
+      let target = db.getProfileByID(transaction.target_id);
+      json.data.push({
+        "id": transaction.id,
+        "amount": transaction.amount,
+        "action": transaction.action,
+        "status": transaction.status,
+        "note": transaction.note,
+        "dateCreated": transaction.date_created,
+        "dateCompleted": transaction.date_completed,
+        "audience": transaction.audience,
+        "actor": {
+          "id": transaction.actor_id,
+          "username": actor.username,
+          "firstName": actor.first_name,
+          "lastName": actor.last_name,
+          "displayName": actor.first_name + " " + actor.last_name
+        },
+        "target": {
+          "id": transaction.target_id,
+          "username": target.username,
+          "firstName": target.first_name,
+          "lastName": target.last_name,
+          "displayName": target.first_name + " " + target.last_name
+        }
+      });
+    }
+    json.pagination.lastTransactionID = transactions[transactions.length - 1].id;
+    return res.json(json);
+  }
 });
 
 // Get info on a transaction
@@ -423,18 +498,30 @@ router.get('/transactions/:transactionID', isAuthenticated, function (req, res, 
   }
 
   if (allowAccess) {
+    let actor = db.getProfileByID(transaction.actor_id);
+    let target = db.getProfileByID(transaction.target_id);
     return res.json({
-      "transaction": {
-        "id": transaction.id,
-        "actorID": transaction.actor_id,
-        "targetID": transaction.target_id,
-        "amount": transaction.amount,
-        "action": transaction.action,
-        "status": transaction.status,
-        "note": transaction.note,
-        "dateCreated": transaction.date_created,
-        "dateCompleted": transaction.date_completed,
-        "audience": transaction.audience
+      "id": transaction.id,
+      "amount": transaction.amount,
+      "action": transaction.action,
+      "status": transaction.status,
+      "note": transaction.note,
+      "dateCreated": transaction.date_created,
+      "dateCompleted": transaction.date_completed,
+      "audience": transaction.audience,
+      "actor": {
+        "id": transaction.actor_id,
+        "username": actor.username,
+        "firstName": actor.first_name,
+        "lastName": actor.last_name,
+        "displayName": actor.first_name + " " + actor.last_name
+      },
+      "target": {
+        "id": transaction.target_id,
+        "username": target.username,
+        "firstName": target.first_name,
+        "lastName": target.last_name,
+        "displayName": target.first_name + " " + target.last_name
       }
     });
   } else {
@@ -483,18 +570,30 @@ router.put('/transactions/:transactionID', isAuthenticated, function (req, res, 
       break;
   }
 
+  let actor = db.getProfileByID(transaction.actor_id);
+  let target = db.getProfileByID(transaction.target_id);
   return res.json({
-    "transaction": {
-      "id": transaction.id,
-      "actorID": transaction.actor_id,
-      "targetID": transaction.target_id,
-      "amount": transaction.amount,
-      "action": transaction.action,
-      "status": transaction.status,
-      "note": transaction.note,
-      "dateCreated": transaction.date_created,
-      "dateCompleted": transaction.date_completed,
-      "audience": transaction.audience
+    "id": transaction.id,
+    "amount": transaction.amount,
+    "action": transaction.action,
+    "status": transaction.status,
+    "note": transaction.note,
+    "dateCreated": transaction.date_created,
+    "dateCompleted": transaction.date_completed,
+    "audience": transaction.audience,
+    "actor": {
+      "id": transaction.actor_id,
+      "username": actor.username,
+      "firstName": actor.first_name,
+      "lastName": actor.last_name,
+      "displayName": actor.first_name + " " + actor.last_name
+    },
+    "target": {
+      "id": transaction.target_id,
+      "username": target.username,
+      "firstName": target.first_name,
+      "lastName": target.last_name,
+      "displayName": target.first_name + " " + target.last_name
     }
   });
 });
