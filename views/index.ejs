@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="en">
+
 	<head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
@@ -8,18 +9,24 @@
 		<link rel="stylesheet" href="/css/index.css">
 		<link rel="stylesheet" href="/css/app.css">
 	</head>
+
 	<body>
 		<p>Hello, <%= user.name || user.username %>!</p>
-		<nav class="nav">
-			<ul>
-				<li class="user"><%= user.name || user.username %></li>
-				<li>
-					<form action="/logout" method="post">
-						<button class="logout" type="submit">Sign out</button>
-						<input type="hidden" name="_csrf" value="<%= csrfToken %>">
-					</form>
-				</li>
-			</ul>
-		</nav>
+		<section class="todoapp">
+			<nav class="nav">
+				<ul>
+					<li class="user">
+						<%= user.name || user.username %>
+					</li>
+					<li>
+						<form action="/logout" method="post">
+							<button class="logout" type="submit">Sign out</button>
+							<input type="hidden" name="_csrf" value="<%= csrfToken %>">
+						</form>
+					</li>
+				</ul>
+			</nav>
+		</section>
 	</body>
+
 </html>
