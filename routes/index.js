@@ -14,12 +14,12 @@ function isAuthenticated(req, res, next) {
 function fetchTodos(req, res, next) {
   db.query('SELECT * FROM todos WHERE owner_id = $1', [
     req.user.id
-  ], function(err, result) {
+  ], function (err, result) {
     if (err) { return next(err); }
-    
+
     const rows = result.rows;
 
-    var todos = rows.map(function(row) {
+    var todos = rows.map(function (row) {
       return {
         id: row.id,
         title: row.title,
@@ -28,7 +28,7 @@ function fetchTodos(req, res, next) {
       }
     });
     res.locals.todos = todos;
-    res.locals.activeCount = todos.filter(function(todo) { return !todo.completed; }).length;
+    res.locals.activeCount = todos.filter(function (todo) { return !todo.completed; }).length;
     res.locals.completedCount = todos.length - res.locals.activeCount;
     next();
   });
@@ -95,7 +95,30 @@ router.get('/profiles/:userID', function (req, res, next) {
     } else if (relationshipRow === undefined) {
       relationship = "none";
     } else {
-      relationship = relationshipRow.relationship;
+      if (relationshipRow.relationship === "friend") {
+        relationship = "friend";
+      } else { // requested
+        let user1IsMe;
+        if (relationshipRow.user1_id === req.user.id) {
+          user1IsMe = true;
+        } else {
+          user1IsMe = false;
+        }
+
+        if (user1IsMe) {
+          if (relationshipRow.relationship === "user1Requested") {
+            relationship = "youRequested";
+          } else {
+            relationship = "theyRequested";
+          }
+        } else { // user2 is me
+          if (relationshipRow.relationship === "user2Requested") {
+            relationship = "youRequested";
+          } else {
+            relationship = "theyRequested";
+          }
+        }
+      }
     }
   } else {
     relationship = "unknown";
@@ -112,6 +135,62 @@ router.get('/profiles/:userID', function (req, res, next) {
       "relationship": relationship,
       "friendsCount": numFriends,
       "id": req.user.id
+    }
+  }
+});
+
+router.post('/profiles/:userID', isAuthenticated, function (req, res, next) {
+  if (req.params.userID === req.user.id) {
+    return res.sendStatus(400).json({ "error": "Cannot add self as friend" });
+  }
+
+  if (req.body.relationship == null) {
+    return res.sendStatus(400).json({ "error": "Missing relationship field" });
+  }
+
+  if (req.body.relationship !== "friend" && req.body.relationship !== "none") {
+    return res.sendStatus(400).json({ "error": "Invalid relationship field" });
+  }
+
+  if (req.body.relationship === "none") {
+    db.deleteRelationshipRow(req.user.id, req.params.userID);
+    return res.sendStatus(200);
+  }
+
+  if (req.body.relationship === "friend") {
+    let relationshipRow = db.getRelationshipRow(req.user.id, req.params.userID);
+    if (relationshipRow == null) {
+      return res.sendStatus(500);
+    } else if (relationshipRow === undefined) {
+      db.upsertRelationshipRow(req.user.id, req.params.userID, "request");
+      return res.sendStatus(200);
+    } else { // relationship exists
+      if (relationshipRow.relationship === "friend") {
+        return res.sendStatus(400).json({ "error": "Already friends" });
+      } else if (relationshipRow.relationship.includes("Requested")) {
+        let user1IsMe;
+        if (relationshipRow.user1_id === req.user.id) {
+          user1IsMe = true;
+        } else {
+          user1IsMe = false;
+        }
+
+        if (user1IsMe) {
+          if (relationshipRow.relationship === "user1Requested") {
+            res.sendStatus(400).json({ "error": "Already requested" });
+          } else {
+            db.upsertRelationshipRow(req.user.id, req.params.userID, "friend");
+            return res.sendStatus(200);
+          }
+        } else {
+          if (relationshipRow.relationship === "user2Requested") {
+            res.sendStatus(400).json({ "error": "Already requested" });
+          } else {
+            db.upsertRelationshipRow(req.user.id, req.params.userID, "friend");
+            return res.sendStatus(200);
+          }
+        }
+      }
     }
   }
 });

@@ -88,8 +88,8 @@ pool.query(`
 
 pool.query(`
   CREATE TABLE IF NOT EXISTS friends (
-    user1_id INTEGER NOT NULL,
-    user2_id INTEGER NOT NULL,
+    user1_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user2_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     relationship TEXT NOT NULL
   )
 `, (err) => {
@@ -146,6 +146,47 @@ function getRelationshipRow(id1, id2) {
       return null
     }
     return result.rows[0];
+  });
+};
+
+function upsertRelationshipRow(requesterId, requestedId, relationship) {
+  let user1_id = requesterId, user2_id = requestedId;
+  let swapped = false;
+  if (requesterId > requestedId) {
+    user1_id = requestedId;
+    user2_id = requesterId;
+    swapped = true;
+  }
+
+  let dbRelationship;
+  if (relationship === "request") {
+    if (!swapped) {
+      dbRelationship = "user1Requested";
+    } else {
+      dbRelationship = "user2Requested";
+    }
+  } else {
+    dbRelationship = "friend";
+  }
+
+  pool.query(`INSERT INTO friends (user1_id, user2_id, relationship) VALUES ($1, $2, $3) 
+    ON CONFLICT (user1_id, user2_id) DO UPDATE 
+      SET relationship = $3`, [user1_id, user2_id, dbRelationship], (err, result) => {
+    if (err) {
+      console.error(err);
+    }
+  });
+};
+
+function deleteRelationshipRow(id1, id2) {
+  if (id1 > id2) {
+    deleteRelationshipRow(id2, id1);
+    return
+  }
+  pool.query(`DELETE FROM friends WHERE user1_id = $1 AND user2_id = $2`, [id1, id2], (err, result) => {
+    if (err) {
+      console.error(err);
+    }
   });
 };
 
@@ -314,14 +355,14 @@ function getTransactionByID(id) {
 function completeTransaction(id, status) {
   const dateCompleted = Date.now() / 1000;
 
-  pool.query(`UPDATE transactions SET status = $1, date_completed = $2 WHERE id = $3`, 
-  [status, dateCompleted, id], (err, result) => {
-    if (err) {
-      console.error(err);
-      return null
-    }
-    return result.rows[0];
-  });
+  pool.query(`UPDATE transactions SET status = $1, date_completed = $2 WHERE id = $3`,
+    [status, dateCompleted, id], (err, result) => {
+      if (err) {
+        console.error(err);
+        return null
+      }
+      return result.rows[0];
+    });
 };
 
 module.exports = {
@@ -330,6 +371,8 @@ module.exports = {
   getProfileByID: getProfileByID,
   getFriendsByID: getFriendsByID,
   getRelationshipRow: getRelationshipRow,
+  upsertRelationshipRow: upsertRelationshipRow,
+  deleteRelationshipRow: deleteRelationshipRow,
   insertTransaction: insertTransaction,
   updateBalance: updateBalance,
   getTransactionsForFriendsFeed: getTransactionsForFriendsFeed,
