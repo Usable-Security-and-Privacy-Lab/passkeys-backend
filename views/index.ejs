@@ -9,6 +9,7 @@
 		<link rel="stylesheet" href="/css/app.css">
 	</head>
 	<body>
+		<p>Hello, <%= user.name || user.username %>!</p>
 		<nav class="nav">
 			<ul>
 				<li class="user"><%= user.name || user.username %></li>
