@@ -250,9 +250,9 @@ async function getMyRecentTransactions(myID, before = null, after = null, limit,
     FROM transactions
     WHERE (actor_id = $1 OR target_id = $1)
       AND status = 'settled'
-      AND ($5 IS NULL OR id < $5)
-      AND ($2 IS NULL OR date_completed < $2)
-      AND ($3 IS NULL OR date_completed > $3)
+      AND ($5::integer IS NULL OR id < $5)
+      AND ($2::integer IS NULL OR date_completed < $2)
+      AND ($3::integer IS NULL OR date_completed > $3)
     ORDER BY id DESC NULLS LAST
     LIMIT $4
     `, [myID, before, after, limit, lastTransactionID]);
@@ -270,9 +270,9 @@ async function getTransactionFeedOfFriend(myID, friendID, before = null, after =
     FROM transactions
     WHERE (audience = 'friends' OR audience = 'public' OR (actor_id = $1 AND target_id = $2) OR (actor_id = $2 AND target_id = $1))
       AND status = 'settled'
-      AND ($6 IS NULL OR id < $6)
-      AND ($3 IS NULL OR date_completed < $3)
-      AND ($4 IS NULL OR date_completed > $4)
+      AND ($6::integer IS NULL OR id < $6)
+      AND ($3::integer IS NULL OR date_completed < $3)
+      AND ($4::integer IS NULL OR date_completed > $4)
     ORDER BY id DESC NULLS LAST
     LIMIT $5
     `, [myID, friendID, before, after, limit, lastTransactionID]);
@@ -290,9 +290,9 @@ async function getTransactionFeedOfUser(myID, partyID, before = null, after = nu
     FROM transactions
     WHERE (audience = 'public' OR (actor_id = $1 AND target_id = $2) OR (actor_id = $2 AND target_id = $1))
       AND status = 'settled'
-      AND ($6 IS NULL OR id < $6)
-      AND ($3 IS NULL OR date_completed < $3)
-      AND ($4 IS NULL OR date_completed > $4)
+      AND ($6::integer IS NULL OR id < $6)
+      AND ($3::integer IS NULL OR date_completed < $3)
+      AND ($4::integer IS NULL OR date_completed > $4)
     ORDER BY id DESC NULLS LAST
     LIMIT $5
     `, [myID, partyID, before, after, limit, lastTransactionID]);
@@ -310,9 +310,9 @@ async function getTransactionsBetweenUsers(myID, partyID, before = null, after =
     FROM transactions
     WHERE (actor_id = $1 AND target_id = $2) OR (actor_id = $2 AND target_id = $1)
       AND status = 'settled'
-      AND ($6 IS NULL OR id < $6)
-      AND ($3 IS NULL OR date_completed < $3)
-      AND ($4 IS NULL OR date_completed > $4)
+      AND ($6::integer IS NULL OR id < $6)
+      AND ($3::integer IS NULL OR date_completed < $3)
+      AND ($4::integer IS NULL OR date_completed > $4)
     ORDER BY id DESC NULLS LAST
     LIMIT $5
     `, [myID, partyID, before, after, limit, lastTransactionID]);
@@ -330,9 +330,9 @@ async function getOutstandingTransactions(myID, before = null, after = null, lim
     FROM transactions
     WHERE (actor_id = $1 OR target_id = $1)
       AND status = 'pending'
-      AND ($5 IS NULL OR id < $5)
-      AND ($2 IS NULL OR date_completed < $2)
-      AND ($3 IS NULL OR date_completed > $3)
+      AND ($5::integer IS NULL OR id < $5)
+      AND ($2::integer IS NULL OR date_completed < $2)
+      AND ($3::integer IS NULL OR date_completed > $3)
     ORDER BY id DESC NULLS LAST
     LIMIT $4
     `, [myID, before, after, limit, lastTransactionID]);

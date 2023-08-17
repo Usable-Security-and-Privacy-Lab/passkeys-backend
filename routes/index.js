@@ -411,7 +411,9 @@ router.get('/transactions', isAuthenticated, async function (req, res, next) {
       json.transactions.push(transactionJSON);
     }
   }
-  json.pagination.lastTransactionID = transactions[transactions.length - 1].id;
+  if (transactions.length > 0) {
+    json.pagination.lastTransactionID = transactions[transactions.length - 1].id;
+  }
   return res.json(json);
 });
 
@@ -472,7 +474,9 @@ router.get('/transactions/outstanding', isAuthenticated, async function (req, re
         }
       });
     }
-    json.pagination.lastTransactionID = transactions[transactions.length - 1].id;
+    if (transactions.length > 0) {
+      json.pagination.lastTransactionID = transactions[transactions.length - 1].id;
+    }
     return res.json(json);
   }
 });
