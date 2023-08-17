@@ -22,6 +22,9 @@ app.set('view engine', 'ejs');
 
 app.locals.pluralize = require('pluralize');
 
+// Disable cacheing so 304 is never sent
+app.disable('etag');
+
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
