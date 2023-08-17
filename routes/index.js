@@ -1,5 +1,5 @@
 var express = require('express');
-var db = require('../db').pool;
+var db = require('../db');
 
 var router = express.Router();
 
@@ -12,7 +12,7 @@ function isAuthenticated(req, res, next) {
 };
 
 function fetchTodos(req, res, next) {
-  db.query('SELECT * FROM todos WHERE owner_id = $1', [
+  db.pool.query('SELECT * FROM todos WHERE owner_id = $1', [
     req.user.id
   ], function (err, result) {
     if (err) { return next(err); }
@@ -61,7 +61,7 @@ router.get('/me', isAuthenticated, function (req, res, next) {
     return res.sendStatus(404);
   }
 
-  const numFriends = getFriendsByID(req.user.id).length;
+  const numFriends = db.getFriendsByID(req.user.id).length;
 
   const json = {
     "profile": {
@@ -128,7 +128,7 @@ router.get('/profiles/:userID', function (req, res, next) {
     relationship = "unknown";
   }
 
-  const numFriends = getFriendsByID(req.params.userID)?.length; // TODO: error handling
+  const numFriends = db.getFriendsByID(req.params.userID)?.length; // TODO: error handling
 
   const json = {
     "profile": {
