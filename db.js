@@ -237,6 +237,8 @@ function getTransactionsForFriendsFeed(friendIDs, myID, before = null, after = n
   `, [friendIDs, myID, before, after, limit, lastTransactionID], (err, result) => {
     if (err) {
       console.error(err);
+      console.log("error in getTransactionsForFriendsFeed");
+      console.log(err);
       return null
     }
     console.log("getTransactionsForFriendsFeed result: " + result.rows)
