@@ -313,28 +313,28 @@ router.post('/transactions', isAuthenticated, function (req, res, next) {
 // TODO: validate input
 // List recent transactions
 router.get('/transactions', isAuthenticated, function (req, res, next) {
-  let feed = req.body.feed;
+  let feed = req.query.feed;
   if (feed == null || (feed !== "friends" && feed !== "user" && feed !== "betweenUs")) {
     feed = "friends";
   }
 
-  let limit = req.body.limit;
+  let limit = req.query.limit;
   if (limit == null) {
     limit = 25;
   } else if (limit > 100) {
     limit = 100;
   }
 
-  let before = req.body.before;
+  let before = req.query.before;
   if (before == null) {
     before = Date.now() / 1000;
   }
-  let after = req.body.after;
+  let after = req.query.after;
   if (after == null) {
     after = 0;
   }
 
-  let lastTransactionID = req.body.lastTransactionID;
+  let lastTransactionID = req.query.lastTransactionID;
   if (lastTransactionID === undefined) {
     lastTransactionID = null;
   }
@@ -350,28 +350,28 @@ router.get('/transactions', isAuthenticated, function (req, res, next) {
       if (friendIDs == null) {
         return res.sendStatus(404).json({ "error": "No friends found for the current user" });
       } else {
-        transactions = db.getTransactionsForFriendsFeed(friendIDs, req.user.id, req.body.before, req.body.after, limit, lastTransactionID);
+        transactions = db.getTransactionsForFriendsFeed(friendIDs, req.user.id, req.query.before, req.query.after, limit, lastTransactionID);
       }
       break;
     case "user":
-      if (req.body.partyID == null) {
+      if (req.query.partyID == null) {
         return res.sendStatus(400).json({ "error": "No partyID specified" });
       }
 
-      if (req.body.partyID === req.user.id) {
-        transactions = db.getMyRecentTransactions(req.user.id, req.body.before, req.body.after, limit, lastTransactionID);
-      } else if (db.getRelationshipRow(req.user.id, req.body.partyID).relationship === "friend") {
-        transactions = db.getTransactionFeedOfFriend(req.user.id, req.body.partyID, req.body.before, req.body.after, limit, lastTransactionID);
+      if (req.query.partyID === req.user.id) {
+        transactions = db.getMyRecentTransactions(req.user.id, req.query.before, req.query.after, limit, lastTransactionID);
+      } else if (db.getRelationshipRow(req.user.id, req.query.partyID).relationship === "friend") {
+        transactions = db.getTransactionFeedOfFriend(req.user.id, req.query.partyID, req.query.before, req.query.after, limit, lastTransactionID);
       } else { // any other user
-        transactions = db.getTransactionFeedOfUser(req.user.id, req.body.partyID, req.body.before, req.body.after, limit, lastTransactionID);
+        transactions = db.getTransactionFeedOfUser(req.user.id, req.query.partyID, req.query.before, req.query.after, limit, lastTransactionID);
       }
       break;
     case "betweenUs":
-      if (req.body.partyID == null) {
+      if (req.query.partyID == null) {
         return res.sendStatus(400).json({ "error": "No partyID specified" });
       }
 
-      transactions = db.getTransactionsBetweenUsers(req.user.id, req.body.partyID, req.body.before, req.body.after, limit, lastTransactionID);
+      transactions = db.getTransactionsBetweenUsers(req.user.id, req.query.partyID, req.query.before, req.query.after, limit, lastTransactionID);
       break;
   }
 
@@ -415,26 +415,26 @@ router.get('/transactions', isAuthenticated, function (req, res, next) {
 });
 
 router.get('/transactions/outstanding', isAuthenticated, function (req, res, next) {
-  let limit = req.body.limit;
+  let limit = req.query.limit;
   if (limit == null || limit > 100) {
     limit = 25;
   }
 
-  let before = req.body.before;
+  let before = req.query.before;
   if (before == null) {
     before = Date.now() / 1000;
   }
-  let after = req.body.after;
+  let after = req.query.after;
   if (after == null) {
     after = 0;
   }
 
-  let lastTransactionID = req.body.lastTransactionID;
+  let lastTransactionID = req.query.lastTransactionID;
   if (lastTransactionID === undefined) {
     lastTransactionID = null;
   }
 
-  let transactions = db.getOutstandingTransactions(req.user.id, req.body.before, req.body.after, limit, lastTransactionID);
+  let transactions = db.getOutstandingTransactions(req.user.id, req.query.before, req.query.after, limit, lastTransactionID);
   if (transactions == null) {
     return res.sendStatus(500);
   } else {
