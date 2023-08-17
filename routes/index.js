@@ -54,14 +54,14 @@ router.get('/checkAuthentication', isAuthenticated, function (req, res, next) {
 
 // Get info on current user
 router.get('/me', isAuthenticated, async function (req, res, next) {
-  const profile = db.getProfileByID(req.user.id);
+  const profile = await db.getProfileByID(req.user.id);
   if (profile == null) {
     return res.sendStatus(500);
   } else if (profile === undefined) {
     return res.sendStatus(404);
   }
 
-  const numFriends = db.getFriendsByID(req.user.id).length;
+  const numFriends = await db.getFriendsByID(req.user.id).length;
 
   const json = {
     "profile": {
@@ -80,7 +80,7 @@ router.get('/me', isAuthenticated, async function (req, res, next) {
 
 // Get info on a user
 router.get('/profiles/:userID', async function (req, res, next) {
-  const profile = db.getProfileByID(req.params.userID);
+  const profile = await db.getProfileByID(req.params.userID);
   if (profile == null) {
     return res.sendStatus(500);
   } else if (profile === undefined) {
@@ -92,7 +92,7 @@ router.get('/profiles/:userID', async function (req, res, next) {
     if (req.params.userID === req.user.id) {
       relationship = "me";
     } else {
-      const relationshipRow = db.getRelationshipRow(req.user.id, req.params.userID);
+      const relationshipRow = await db.getRelationshipRow(req.user.id, req.params.userID);
       if (relationshipRow == null) {
         return res.sendStatus(500);
       } else if (relationshipRow === undefined) {
@@ -128,7 +128,7 @@ router.get('/profiles/:userID', async function (req, res, next) {
     relationship = "unknown";
   }
 
-  const numFriends = db.getFriendsByID(req.params.userID)?.length; // TODO: error handling
+  const numFriends = await db.getFriendsByID(req.params.userID)?.length; // TODO: error handling
 
   const json = {
     "profile": {
@@ -164,16 +164,16 @@ router.post('/profiles/:userID', isAuthenticated, async function (req, res, next
   }
 
   if (req.body.relationship === "none") {
-    db.deleteRelationshipRow(req.user.id, req.params.userID);
+    await db.deleteRelationshipRow(req.user.id, req.params.userID);
     return res.sendStatus(200);
   }
 
   if (req.body.relationship === "friend") {
-    let relationshipRow = db.getRelationshipRow(req.user.id, req.params.userID);
+    let relationshipRow = await db.getRelationshipRow(req.user.id, req.params.userID);
     if (relationshipRow == null) {
       return res.sendStatus(500);
     } else if (relationshipRow === undefined) {
-      db.upsertRelationshipRow(req.user.id, req.params.userID, "request");
+      await db.upsertRelationshipRow(req.user.id, req.params.userID, "request");
       return res.sendStatus(200);
     } else { // relationship exists
       if (relationshipRow.relationship === "friend") {
@@ -190,14 +190,14 @@ router.post('/profiles/:userID', isAuthenticated, async function (req, res, next
           if (relationshipRow.relationship === "user1Requested") {
             res.sendStatus(400).json({ "error": "Already requested" });
           } else {
-            db.upsertRelationshipRow(req.user.id, req.params.userID, "friend");
+            await db.upsertRelationshipRow(req.user.id, req.params.userID, "friend");
             return res.sendStatus(200);
           }
         } else {
           if (relationshipRow.relationship === "user2Requested") {
             res.sendStatus(400).json({ "error": "Already requested" });
           } else {
-            db.upsertRelationshipRow(req.user.id, req.params.userID, "friend");
+            await db.upsertRelationshipRow(req.user.id, req.params.userID, "friend");
             return res.sendStatus(200);
           }
         }
@@ -210,7 +210,7 @@ router.post('/profiles/:userID', isAuthenticated, async function (req, res, next
 // TODO: incrementally load friends?
 // Get friends of a user
 router.get('/profiles/:userID/friends', async function (req, res, next) {
-  const friends = db.getFriendsByID(req.params.userID);
+  const friends = await db.getFriendsByID(req.params.userID);
   if (friends == null) {
     return res.sendStatus(404);
   }
@@ -249,7 +249,7 @@ router.post('/transactions', isAuthenticated, async function (req, res, next) {
     action = "pay";
   }
 
-  let balance = db.getProfileByID(req.user.id).balance;
+  let balance = await db.getProfileByID(req.user.id).balance;
   let status = "pending";
 
   if (action === "pay") {
@@ -270,17 +270,17 @@ router.post('/transactions', isAuthenticated, async function (req, res, next) {
     audience = "public";
   }
 
-  let transactionRow = db.insertTransaction(req.user.id, req.body.target_id, req.body.amount, action, status, note, req.body.audience)
+  let transactionRow = await db.insertTransaction(req.user.id, req.body.target_id, req.body.amount, action, status, note, req.body.audience)
   if (transactionRow == null) {
     return res.sendStatus(500);
   }
 
   if (action === "pay") {
-    db.updateBalance(req.user.id, balance);
+    await db.updateBalance(req.user.id, balance);
   }
 
-  let actor = db.getProfileByID(req.user.id);
-  let target = db.getProfileByID(req.body.target_id);
+  let actor = await db.getProfileByID(req.user.id);
+  let target = await db.getProfileByID(req.body.target_id);
 
   const json = {
     "id": transactionRow.id,
@@ -346,11 +346,11 @@ router.get('/transactions', isAuthenticated, async function (req, res, next) {
   let transactions;
   switch (feed) {
     case "friends":
-      let friendIDs = db.getFriendsByID(req.user.id).map(friend => friend.id);
+      let friendIDs = await db.getFriendsByID(req.user.id).map(friend => friend.id);
       if (friendIDs == null) {
         return res.sendStatus(404).json({ "error": "No friends found for the current user" });
       } else {
-        transactions = db.getTransactionsForFriendsFeed(friendIDs, req.user.id, req.query.before, req.query.after, limit, lastTransactionID);
+        transactions = await db.getTransactionsForFriendsFeed(friendIDs, req.user.id, req.query.before, req.query.after, limit, lastTransactionID);
       }
       break;
     case "user":
@@ -359,11 +359,11 @@ router.get('/transactions', isAuthenticated, async function (req, res, next) {
       }
 
       if (req.query.partyID === req.user.id) {
-        transactions = db.getMyRecentTransactions(req.user.id, req.query.before, req.query.after, limit, lastTransactionID);
+        transactions = await db.getMyRecentTransactions(req.user.id, req.query.before, req.query.after, limit, lastTransactionID);
       } else if (db.getRelationshipRow(req.user.id, req.query.partyID).relationship === "friend") {
-        transactions = db.getTransactionFeedOfFriend(req.user.id, req.query.partyID, req.query.before, req.query.after, limit, lastTransactionID);
+        transactions = await db.getTransactionFeedOfFriend(req.user.id, req.query.partyID, req.query.before, req.query.after, limit, lastTransactionID);
       } else { // any other user
-        transactions = db.getTransactionFeedOfUser(req.user.id, req.query.partyID, req.query.before, req.query.after, limit, lastTransactionID);
+        transactions = await db.getTransactionFeedOfUser(req.user.id, req.query.partyID, req.query.before, req.query.after, limit, lastTransactionID);
       }
       break;
     case "betweenUs":
@@ -371,7 +371,7 @@ router.get('/transactions', isAuthenticated, async function (req, res, next) {
         return res.sendStatus(400).json({ "error": "No partyID specified" });
       }
 
-      transactions = db.getTransactionsBetweenUsers(req.user.id, req.query.partyID, req.query.before, req.query.after, limit, lastTransactionID);
+      transactions = await db.getTransactionsBetweenUsers(req.user.id, req.query.partyID, req.query.before, req.query.after, limit, lastTransactionID);
       break;
   }
 
@@ -379,8 +379,8 @@ router.get('/transactions', isAuthenticated, async function (req, res, next) {
     return res.sendStatus(500);
   } else {
     for (const transaction in transactions) {
-      let actor = db.getProfileByID(transaction.actor_id);
-      let target = db.getProfileByID(transaction.target_id);
+      let actor = await db.getProfileByID(transaction.actor_id);
+      let target = await db.getProfileByID(transaction.target_id);
       let transactionJSON = {
         "id": transaction.id,
         "action": transaction.action,
@@ -434,7 +434,7 @@ router.get('/transactions/outstanding', isAuthenticated, async function (req, re
     lastTransactionID = null;
   }
 
-  let transactions = db.getOutstandingTransactions(req.user.id, req.query.before, req.query.after, limit, lastTransactionID);
+  let transactions = await db.getOutstandingTransactions(req.user.id, req.query.before, req.query.after, limit, lastTransactionID);
   if (transactions == null) {
     return res.sendStatus(500);
   } else {
@@ -444,8 +444,8 @@ router.get('/transactions/outstanding', isAuthenticated, async function (req, re
     };
 
     for (const transaction in transactions) {
-      let actor = db.getProfileByID(transaction.actor_id);
-      let target = db.getProfileByID(transaction.target_id);
+      let actor = await db.getProfileByID(transaction.actor_id);
+      let target = await db.getProfileByID(transaction.target_id);
       json.data.push({
         "id": transaction.id,
         "amount": transaction.amount,
@@ -478,7 +478,7 @@ router.get('/transactions/outstanding', isAuthenticated, async function (req, re
 
 // Get info on a transaction
 router.get('/transactions/:transactionID', isAuthenticated, async function (req, res, next) {
-  const transaction = db.getTransactionByID(req.params.transactionID);
+  const transaction = await db.getTransactionByID(req.params.transactionID);
   if (transaction == null) {
     return res.sendStatus(404).json({ "error": "Transaction not found" });
   }
@@ -501,8 +501,8 @@ router.get('/transactions/:transactionID', isAuthenticated, async function (req,
   }
 
   if (allowAccess) {
-    let actor = db.getProfileByID(transaction.actor_id);
-    let target = db.getProfileByID(transaction.target_id);
+    let actor = await db.getProfileByID(transaction.actor_id);
+    let target = await db.getProfileByID(transaction.target_id);
     let transactionJSON = {
       "id": transaction.id,
       "action": transaction.action,
@@ -542,7 +542,7 @@ router.put('/transactions/:transactionID', isAuthenticated, async function (req,
     return res.sendStatus(400).json({ "error": "Invalid/missing action" });
   }
 
-  const transaction = db.getTransactionByID(req.params.transactionID);
+  const transaction = await db.getTransactionByID(req.params.transactionID);
 
   if (transaction == null) {
     return res.sendStatus(404).json({ "error": "Transaction not found" });
@@ -555,33 +555,33 @@ router.put('/transactions/:transactionID', isAuthenticated, async function (req,
       if (transaction.target_id !== req.user.id) {
         return res.sendStatus(401).json({ "error": "Unauthorized" });
       } else {
-        const balance = db.getProfileByID(req.user.id).balance;
+        const balance = await db.getProfileByID(req.user.id).balance;
         if (balance < transaction.amount) {
           return res.sendStatus(400).json({ "error": "Insufficient funds" });
         }
 
-        transaction = db.updateTransactionStatus(req.params.transactionID, "settled");
-        db.updateBalance(transaction.target_id, transaction.amount); // TODO: verify this worked, rollback if not?
+        transaction = await db.updateTransactionStatus(req.params.transactionID, "settled");
+        await db.updateBalance(transaction.target_id, transaction.amount); // TODO: verify this worked, rollback if not?
       }
       break;
     case "deny":
       if (transaction.target_id !== req.user.id) {
         return res.sendStatus(401).json({ "error": "Unauthorized" });
       } else {
-        transaction = db.updateTransactionStatus(req.params.transactionID, "denied");
+        transaction = await db.updateTransactionStatus(req.params.transactionID, "denied");
       }
       break;
     case "cancel":
       if (transaction.actor_id !== req.user.id) { 
         return res.sendStatus(401).json({ "error": "Unauthorized" });
       } else {
-        transaction = db.updateTransactionStatus(req.params.transactionID, "cancelled");
+        transaction = await db.updateTransactionStatus(req.params.transactionID, "cancelled");
         break;
       }
   }
 
-  let actor = db.getProfileByID(transaction.actor_id);
-  let target = db.getProfileByID(transaction.target_id);
+  let actor = await db.getProfileByID(transaction.actor_id);
+  let target = await db.getProfileByID(transaction.target_id);
   return res.json({
     "id": transaction.id,
     "amount": transaction.amount,
