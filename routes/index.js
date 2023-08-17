@@ -572,8 +572,12 @@ router.put('/transactions/:transactionID', isAuthenticated, function (req, res, 
       }
       break;
     case "cancel":
-      transaction = db.updateTransactionStatus(req.params.transactionID, "cancelled");
-      break;
+      if (transaction.actor_id !== req.user.id) { 
+        return res.sendStatus(401).json({ "error": "Unauthorized" });
+      } else {
+        transaction = db.updateTransactionStatus(req.params.transactionID, "cancelled");
+        break;
+      }
   }
 
   let actor = db.getProfileByID(transaction.actor_id);
