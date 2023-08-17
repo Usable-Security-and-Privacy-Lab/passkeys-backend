@@ -53,7 +53,7 @@ router.get('/checkAuthentication', isAuthenticated, function (req, res, next) {
 });
 
 // Get info on current user
-router.get('/me', isAuthenticated, function (req, res, next) {
+router.get('/me', isAuthenticated, async function (req, res, next) {
   const profile = db.getProfileByID(req.user.id);
   if (profile == null) {
     return res.sendStatus(500);
@@ -79,7 +79,7 @@ router.get('/me', isAuthenticated, function (req, res, next) {
 });
 
 // Get info on a user
-router.get('/profiles/:userID', function (req, res, next) {
+router.get('/profiles/:userID', async function (req, res, next) {
   const profile = db.getProfileByID(req.params.userID);
   if (profile == null) {
     return res.sendStatus(500);
@@ -150,7 +150,7 @@ router.get('/profiles/:userID', function (req, res, next) {
 });
 
 // Add or remove a friend
-router.post('/profiles/:userID', isAuthenticated, function (req, res, next) {
+router.post('/profiles/:userID', isAuthenticated, async function (req, res, next) {
   if (req.params.userID === req.user.id) {
     return res.sendStatus(400).json({ "error": "Cannot add self as friend" });
   }
@@ -209,7 +209,7 @@ router.post('/profiles/:userID', isAuthenticated, function (req, res, next) {
 // TODO: Friend list privacy settings
 // TODO: incrementally load friends?
 // Get friends of a user
-router.get('/profiles/:userID/friends', function (req, res, next) {
+router.get('/profiles/:userID/friends', async function (req, res, next) {
   const friends = db.getFriendsByID(req.params.userID);
   if (friends == null) {
     return res.sendStatus(404);
@@ -235,7 +235,7 @@ router.get('/profiles/:userID/friends', function (req, res, next) {
 
 // Initiate a transaction
 // TODO: do we need to send transaction in response?
-router.post('/transactions', isAuthenticated, function (req, res, next) {
+router.post('/transactions', isAuthenticated, async function (req, res, next) {
   if (req.body.targetID == null || req.body.amount == null || req.body.note == null) {
     return res.sendStatus(400).json({ "error": "Missing required fields" });
   }
@@ -312,7 +312,7 @@ router.post('/transactions', isAuthenticated, function (req, res, next) {
 
 // TODO: validate input
 // List recent transactions
-router.get('/transactions', isAuthenticated, function (req, res, next) {
+router.get('/transactions', isAuthenticated, async function (req, res, next) {
   let feed = req.query.feed;
   if (feed == null || (feed !== "friends" && feed !== "user" && feed !== "betweenUs")) {
     feed = "friends";
@@ -414,7 +414,7 @@ router.get('/transactions', isAuthenticated, function (req, res, next) {
   return res.json(json);
 });
 
-router.get('/transactions/outstanding', isAuthenticated, function (req, res, next) {
+router.get('/transactions/outstanding', isAuthenticated, async function (req, res, next) {
   let limit = req.query.limit;
   if (limit == null || limit > 100) {
     limit = 25;
@@ -477,7 +477,7 @@ router.get('/transactions/outstanding', isAuthenticated, function (req, res, nex
 });
 
 // Get info on a transaction
-router.get('/transactions/:transactionID', isAuthenticated, function (req, res, next) {
+router.get('/transactions/:transactionID', isAuthenticated, async function (req, res, next) {
   const transaction = db.getTransactionByID(req.params.transactionID);
   if (transaction == null) {
     return res.sendStatus(404).json({ "error": "Transaction not found" });
@@ -536,7 +536,7 @@ router.get('/transactions/:transactionID', isAuthenticated, function (req, res, 
 });
 
 // Complete a transaction request
-router.put('/transactions/:transactionID', isAuthenticated, function (req, res, next) {
+router.put('/transactions/:transactionID', isAuthenticated, async function (req, res, next) {
   if (req.body.action == null ||
     (req.body.action !== "approve" && req.body.action !== "deny" && req.body.action !== "cancel")) {
     return res.sendStatus(400).json({ "error": "Invalid/missing action" });
