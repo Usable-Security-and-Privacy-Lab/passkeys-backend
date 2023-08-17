@@ -346,7 +346,8 @@ router.get('/transactions', isAuthenticated, async function (req, res, next) {
   let transactions;
   switch (feed) {
     case "friends":
-      let friendIDs = await db.getFriendsByID(req.user.id).map(friend => friend.id);
+      let friendIDRows = await db.getFriendsByID(req.user.id)
+      let friendIDs = friendIDRows.map((row) => row.id);
       if (friendIDs == null) {
         return res.sendStatus(404).json({ "error": "No friends found for the current user" });
       } else {
