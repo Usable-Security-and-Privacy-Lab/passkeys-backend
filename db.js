@@ -239,6 +239,7 @@ function getTransactionsForFriendsFeed(friendIDs, myID, before = null, after = n
       console.error(err);
       return null
     }
+    console.log("getTransactionsForFriendsFeed result: " + result.rows)
     return result.rows;
   });
 };

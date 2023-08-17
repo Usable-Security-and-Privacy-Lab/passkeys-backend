@@ -9,11 +9,11 @@ var pool = require('../db').pool;
 var store = new SessionChallengeStore();
 
 passport.use(new WebAuthnStrategy({ store: store }, function verify(id, userHandle, cb) {
-  //
+  /*
   console.log("In verify");
   console.log("id: " + id);
   console.log("userHandle: " + userHandle)
-  //
+  */
   pool.query('SELECT * FROM public_key_credentials WHERE external_id = $1', [id], function(err, result) {
     if (err) { return cb(err); }
     const row = result.rows[0];
@@ -30,14 +30,14 @@ passport.use(new WebAuthnStrategy({ store: store }, function verify(id, userHand
     });
   });
 }, function register(user, id, publicKey, cb) {
-  //
+  /*
   console.log("In register");
   console.log("id: (will insert in DB as handle)" + id);
   console.log("publicKey: " + publicKey);
   console.log("user.name: (will insert in DB as username)" + user.name); // TODO: rename user.name to user.username for consistency/less confusion
   console.log("user.displayName: (will insert in DB as name)" + user.displayName); // TODO: ensure displayName naming is consistent throughout code
   console.log("user.id: " + user.id);
-  //
+  */
   pool.query('INSERT INTO users (username, name, handle) VALUES ($1, $2, $3) RETURNING id', [
     user.name,
     user.displayName,
@@ -86,18 +86,18 @@ router.post('/login/public-key', passport.authenticate('webauthn', {
   failureMessage: true,
   failWithError: true
 }), function(req, res, next) {
-  //
+  /*
   console.log("In /login/public-key after passport.authenticate. Request body:");
   console.log(req.body)
   console.log("req.user: " + req.user)
-  //
+  */
   res.json({ ok: true, location: '/', username: req.user.username }); // TODO: encode username in base64url?
 }, function(err, req, res, next) {
-  //
+  /*
   console.log("In /login/public-key after passport.authenticate ERROR FUNC. Request body:");
   console.log(req.body)
   console.log(err)
-  //
+  */
   var cxx = Math.floor(err.status / 100);
   if (cxx != 4) { return next(err); }
   res.json({ ok: false, location: '/login' });
