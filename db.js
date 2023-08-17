@@ -227,7 +227,7 @@ async function getTransactionsForFriendsFeed(friendIDs, myID, before = null, aft
     const res = await pool.query(`
     SELECT *
     FROM transactions
-    WHERE (actor_id = ANY ($1::text[]) OR target_id = ANY ($1::text[]))
+    WHERE (actor_id = ANY ($1::integer[]) OR target_id = ANY ($1::integer[]))
       AND (audience = 'friends' OR audience = 'public' OR actor_id = $2 OR target_id = $2)
       AND status = 'settled'
       AND ($6 IS NULL OR id < $6)
