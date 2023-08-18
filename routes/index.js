@@ -393,7 +393,7 @@ router.get('/transactions', isAuthenticated, async function (req, res, next) {
     case "friends":
       let friendIDRows = await db.getFriendsByID(req.user.id)
       console.log(friendIDRows); // TODO: remove
-      let friendIDs = friendIDRows.map((row) => row.id);
+      let friendIDs = friendIDRows.map((row) => row.user1_id === req.user.id ? row.user2_id : row.user1_id);
       console.log(friendIDs); // TODO: remove
       if (friendIDs == null) {
         return res.sendStatus(500)
