@@ -459,7 +459,7 @@ router.get('/transactions', isAuthenticated, async function (req, res, next) {
       if (transaction.actor_id === req.user.id || transaction.target_id === req.user.id) {
         transactionJSON.amount = transaction.amount;
       }
-      json.transactions.push(transactionJSON);
+      json.data.push(transactionJSON);
     }
   }
   if (transactions.length > 0) {
