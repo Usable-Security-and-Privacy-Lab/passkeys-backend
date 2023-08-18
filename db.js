@@ -132,7 +132,7 @@ async function updateProfile(id, firstName = null, lastName = null) {
 
 async function getProfileByID(id) {
   try {
-    const res = await pool.query(`SELECT * FROM profiles WHERE id = $1`, [id]);
+    const res = await pool.query(`SELECT * FROM profiles WHERE user_id = $1`, [id]);
     return res.rows[0];
   } catch (error) {
     console.error(error);
@@ -255,7 +255,7 @@ async function insertTransaction(actor_id, target_id, amount, action, status, no
 
 async function updateBalance(id, newBalance) {
   try {
-    const res = await pool.query(`UPDATE profiles SET balance = $1 WHERE id = $2`, [newBalance, id]);
+    const res = await pool.query(`UPDATE profiles SET balance = $1 WHERE user_id = $2`, [newBalance, id]);
     return res.rows[0];
   } catch (error) {
     console.error(error);
