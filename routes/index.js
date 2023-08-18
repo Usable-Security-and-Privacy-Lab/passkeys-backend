@@ -231,7 +231,7 @@ router.get('/profiles/:userID/friends', async function (req, res, next) {
     "friends": []
   }
 
-  for (const friend in friends) {
+  for (const friend of friends) {
     json.friends.push({
       "username": friend.username,
       "firstName": friend.first_name,
@@ -262,7 +262,7 @@ router.get('/profiles', async function (req, res, next) {
     "profiles": []
   }
 
-  for (const profile in profiles) {
+  for (const profile of profiles) {
     json.profiles.push({
       "username": profile.username,
       "firstName": profile.first_name,
@@ -392,12 +392,10 @@ router.get('/transactions', isAuthenticated, async function (req, res, next) {
   switch (feed) {
     case "friends":
       let friendIDRows = await db.getFriendsByID(req.user.id)
-      console.log(friendIDRows); // TODO: remove
       if (friendIDRows == null) {
         return res.sendStatus(500)
       }
       let friendIDs = friendIDRows.map((row) => row.user1_id === req.user.id ? row.user2_id : row.user1_id);
-      console.log(friendIDs); // TODO: remove
       transactions = await db.getTransactionsForFriendsFeed(friendIDs, req.user.id, req.query.before, req.query.after, limit, lastTransactionID);
       break;
     case "user":
@@ -421,18 +419,13 @@ router.get('/transactions', isAuthenticated, async function (req, res, next) {
       transactions = await db.getTransactionsBetweenUsers(req.user.id, req.query.partyID, req.query.before, req.query.after, limit, lastTransactionID);
       break;
   }
-  console.log(transactions); // TODO: remove
 
   if (transactions == null) {
     return res.sendStatus(500);
   } else {
-    for (const transaction in transactions) {
+    for (const transaction of transactions) {
       let actor = await db.getProfileByID(transaction.actor_id);
-      console.log(transaction.actor_id) // TODO: remove
-      console.log(actor); // TODO: remove
       let target = await db.getProfileByID(transaction.target_id);
-      console.log(transaction.target_id); // TODO: remove
-      console.log(target); // TODO: remove
       let transactionJSON = {
         "id": transaction.id,
         "action": transaction.action,
@@ -497,7 +490,7 @@ router.get('/transactions/outstanding', isAuthenticated, async function (req, re
       "data": []
     };
 
-    for (const transaction in transactions) {
+    for (const transaction of transactions) {
       let actor = await db.getProfileByID(transaction.actor_id);
       let target = await db.getProfileByID(transaction.target_id);
       json.data.push({
