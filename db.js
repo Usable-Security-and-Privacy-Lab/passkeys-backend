@@ -10,6 +10,12 @@ const pool = new Pool({
 //   ssl: process.env.DATABASE_URL ? true : false
 // }) 
 
+pool.query(`CREATE EXTENSION IF NOT EXISTS pg_trgm`, (err) => {
+  if (err) {
+    console.error('Error creating "pg_trgm" extension:', err);
+  }
+});
+
 pool.query(`
   CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
@@ -116,6 +122,14 @@ async function getUserByID(id) { // TODO: verify that this works
   }
 };
 
+async function updateProfile(id, firstName = null, lastName = null) {
+  try {
+    await pool.query(`UPDATE profiles SET first_name = $1, last_name = $2 WHERE user_id = $3`, [firstName, lastName, id]);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
 async function getProfileByID(id) {
   try {
     const res = await pool.query(`SELECT * FROM profiles WHERE id = $1`, [id]);
@@ -189,6 +203,32 @@ async function deleteRelationshipRow(id1, id2) {
     await pool.query(`DELETE FROM friends WHERE user1_id = $1 AND user2_id = $2`, [id1, id2]);
   } catch (error) {
     console.error(error);
+  }
+};
+
+async function searchProfiles(query, limit) {
+  try {
+    const res = await pool.query(`
+      SELECT
+          username,
+          similarity(username, $1) AS exact_similarity
+      FROM
+          profiles
+      WHERE
+          username % $1
+      ORDER BY
+          CASE
+              WHEN username = $1 THEN 1
+              WHEN username ILIKE $1 || '%' THEN 2
+              ELSE 3
+          END,
+          similarity(username, $1) DESC
+      LIMIT $2
+    `, [query, limit]);
+    return res.rows;
+  } catch (error) {
+    console.error(error);
+    return null;
   }
 };
 

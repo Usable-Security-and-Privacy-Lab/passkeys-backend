@@ -3,6 +3,8 @@ var db = require('../db');
 
 var router = express.Router();
 
+// TODO: should errors be caught in the routes instead of in db.js so that we can send error msgs?
+
 function isAuthenticated(req, res, next) {
   if (req.isAuthenticated()) {
     next();
@@ -76,6 +78,16 @@ router.get('/me', isAuthenticated, async function (req, res, next) {
     }
   }
   return res.json(json);
+});
+
+// Update profile
+router.put('/me', isAuthenticated, async function (req, res, next) {
+  if (req.body.firstName == null && req.body.lastName == null) {
+    return res.sendStatus(400).json({ "error": "Missing required fields" });
+  }
+
+  await db.updateProfile(req.user.id, req.body.firstName, req.body.lastName);
+  return res.sendStatus(200);
 });
 
 // Get info on a user
@@ -228,6 +240,39 @@ router.get('/profiles/:userID/friends', async function (req, res, next) {
       "id": friend.id
     });
   }
+});
+
+// Search for profiles
+router.get('/profiles', async function (req, res, next) {
+  if (req.query.query == null) {
+    return res.sendStatus(400).json({ "error": "Missing search query field" });
+  }
+
+  let limit = req.query.limit;
+  if (limit == null) {
+    limit = 25;
+  }
+
+  let profiles = await db.searchProfiles(req.query.query, limit);
+  if (profiles == null) {
+    return res.sendStatus(500);
+  }
+
+  let json = {
+    "profiles": []
+  }
+
+  for (const profile in profiles) {
+    json.profiles.push({
+      "username": profile.username,
+      "firstName": profile.first_name,
+      "lastName": profile.last_name,
+      "displayName": profile.first_name + " " + profile.last_name,
+      "id": profile.id
+    });
+  }
+
+  return res.json(json);
 });
 
 // TODO: validate input
