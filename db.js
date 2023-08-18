@@ -206,6 +206,7 @@ async function deleteRelationshipRow(id1, id2) {
   }
 };
 
+// TODO: friend results first
 async function searchProfiles(query, limit) {
   try {
     const res = await pool.query(`
@@ -409,11 +410,13 @@ async function completeTransaction(id, status) {
 module.exports = {
   pool: pool,
   getUserByID: getUserByID,
+  updateProfile: updateProfile,
   getProfileByID: getProfileByID,
   getFriendsByID: getFriendsByID,
   getRelationshipRow: getRelationshipRow,
   upsertRelationshipRow: upsertRelationshipRow,
   deleteRelationshipRow: deleteRelationshipRow,
+  searchProfiles: searchProfiles,
   insertTransaction: insertTransaction,
   updateBalance: updateBalance,
   getTransactionsForFriendsFeed: getTransactionsForFriendsFeed,
