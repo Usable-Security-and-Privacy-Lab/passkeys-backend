@@ -428,7 +428,9 @@ router.get('/transactions', isAuthenticated, async function (req, res, next) {
   } else {
     for (const transaction in transactions) {
       let actor = await db.getProfileByID(transaction.actor_id);
+      console.log(actor); // TODO: remove
       let target = await db.getProfileByID(transaction.target_id);
+      console.log(target); // TODO: remove
       let transactionJSON = {
         "id": transaction.id,
         "action": transaction.action,
