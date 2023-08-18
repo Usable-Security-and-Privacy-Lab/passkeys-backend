@@ -268,15 +268,15 @@ async function getTransactionsForFriendsFeed(friendIDs, myID, before = null, aft
     const res = await pool.query(`
     SELECT *
     FROM transactions
-    WHERE (actor_id = ANY ($1::integer[]) OR target_id = ANY ($1::integer[]))
-      AND (audience = 'friends' OR audience = 'public' OR actor_id = $2 OR target_id = $2)
+    WHERE (((actor_id = ANY ($1::integer[]) OR target_id = ANY ($1::integer[])) AND (audience = 'friends' OR audience = 'public' OR actor_id = $2 OR target_id = $2))
+      OR (actor_id = $2 OR target_id = $2))
       AND status = 'settled'
       AND ($6::integer IS NULL OR id < $6)
       AND ($3::integer IS NULL OR date_completed < $3)
       AND ($4::integer IS NULL OR date_completed > $4)
     ORDER BY id DESC NULLS LAST
     LIMIT $5
-    `, [friendIDs, myID, before, after, limit, lastTransactionID]);
+    `, [friendIDs, myID, before, after, limit, lastTransactionID]); // OR actor_id = $2 OR target_id = $2
     return res.rows;
   } catch (error) {
     console.error(error);
