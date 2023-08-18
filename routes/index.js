@@ -392,9 +392,11 @@ router.get('/transactions', isAuthenticated, async function (req, res, next) {
   switch (feed) {
     case "friends":
       let friendIDRows = await db.getFriendsByID(req.user.id)
+      console.log(friendIDRows); // TODO: remove
       let friendIDs = friendIDRows.map((row) => row.id);
+      console.log(friendIDs); // TODO: remove
       if (friendIDs == null) {
-        return res.sendStatus(404).json({ "error": "No friends found for the current user" });
+        return res.sendStatus(500)
       } else {
         transactions = await db.getTransactionsForFriendsFeed(friendIDs, req.user.id, req.query.before, req.query.after, limit, lastTransactionID);
       }
@@ -420,6 +422,7 @@ router.get('/transactions', isAuthenticated, async function (req, res, next) {
       transactions = await db.getTransactionsBetweenUsers(req.user.id, req.query.partyID, req.query.before, req.query.after, limit, lastTransactionID);
       break;
   }
+  console.log(transactions); // TODO: remove
 
   if (transactions == null) {
     return res.sendStatus(500);
