@@ -1,4 +1,32 @@
 # passkeys-backend
+Most everything I think you'll need to know/resources you'll need to work on this project.
+
+# Heroku
+Deployment to Heroku is done through Git.
+## General notes
+- **You can only access the Heroku app/use Heroku commands for the app via the CLI if you are in that app's repository/the location where you added the Heroku remote. So typing any app-associated Heroku commands will not work unless you're in that directory.**
+## Setup
+1. Clone the [passkeys-backend](https://github.com/Usable-Security-and-Privacy-Lab/passkeys-backend) project to your development environment.
+2. [Install the Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli#install-the-heroku-cli).
+3. Log into the lab Heroku account in the heroku command line interface using `heroku login` (details in the link in step 2).
+4. Navigate in the terminal to the folder where you cloned `passkeys-backend` so that you're inside the `passkeys-backend` directory.
+5. Enter `heroku git:remote -a passkeys-backend` in the command line to add the Heroku remote to your local repository (see ["For an Existing App" here](https://devcenter.heroku.com/articles/git#for-an-existing-app) for more information/help).
+## Deploy to Heroku
+- Once you've committed changes to your local repository, type `git push heroku main` in the command line to deploy to the Heroku server.
+- Note to also push your commits to the `passkeys-backend` lab repository as well so that your teammates can have your updated code to work on.
+## Environment Variables
+- Use `heroku config` to see the set environment variables for the app. We have the database URL and the session secret saved as environment variables. If you need to set new ones, you'll need to do your own research on how to do so. Check the Heroku documentation, I think [this](https://devcenter.heroku.com/articles/config-vars) is the page you want.
+## Access the Database
+- To access the app's database directly, use `heroku pg:psql`. This will connect you to the database associated with the app (assuming you're in)
+- Some useful commands:
+	- `\dt` - display all tables in the database
+	- `TABLE table_name;` - show the contents of a table with name `table_name`
+	- Use other SQL commands to view/modify the database as needed (you're on your own). Don't forget semicolons where needed!
+	- You may need to type `q` to exit some commands.
+	- `ctrl + Z` to exit the database connection.
+## View Node/Express app logs
+- To view the logs of your running program, including log statements, error statements, etc., use `heroku logs`
+- `heroku logs --tail` is particularly useful to stay connected to the log feed during debugging
 
 # Database Structure
 
