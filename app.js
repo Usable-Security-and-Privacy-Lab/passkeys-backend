@@ -64,7 +64,7 @@ app.use(function(req, res, next) {
   res.locals.csrfToken = 'TODO';
   next();
 });
-app.set('trust proxy', true);
+app.set('trust proxy', true); // For Heroku compatability
 
 
 app.use('/', indexRouter);

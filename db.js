@@ -206,7 +206,7 @@ async function deleteRelationshipRow(id1, id2) {
   }
 };
 
-// TODO: friend results first
+// TODO: have friend results show first in the search, followed by other users
 async function searchProfiles(query, limit) {
   try {
     const res = await pool.query(`

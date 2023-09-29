@@ -28,6 +28,73 @@ Deployment to Heroku is done through Git.
 - To view the logs of your running program, including log statements, error statements, etc., use `heroku logs`
 - `heroku logs --tail` is particularly useful to stay connected to the log feed during debugging
 
+# Database Structure/Fields Explanation
+## TABLE users
+Store signed up users. Each user will have a profile row in `TABLE profiles` which contains their Venmo profile information, but `users` strictly contains information regarding authentication.
+- `id` - user identifier - referenced by other tables as user_id, actor_id, target_id
+- `username` - the username of the user
+- `hashed_password` - unused
+- `salt` - unused
+- `name` - the user's display name, e.g. my full name, David Gaag
+- `handle` - randomly generated uuid, created in `/signup/public-key/challenge` - I'm not entirely sure what this does, to be honest
+## TABLE public_key_credentials
+- `id` - the id of the public key row
+- `user_id` - the user's identifier (`id `in `TABLE user` )
+- `external_id` - I *think* this is the `handle` in `TABLE users`
+- `public_key` - the public key of a user
+## TABLE profiles
+Each user will have a profile row in `TABLE profiles` which contains their Venmo profile information.
+- `user_id` - the user's identifier (`id `in `TABLE user` )
+- `first_name` - the user's first name
+	- NULL-able if never given
+- `last_name`
+	- NULL-able if never given
+- `balance` -  the user's account balance in fictional currency (never use dollars/$ for legal reasons)
+	- Two decimal places
+## TABLE transactions
+All transactions which have occurred on the platform/app, ever. Not deleted when a user deletes their profile (TODO?).
+- `id` - the transaction's identifier
+- `actor_id` - the id of the user who initiated the transaction
+- `target_id` - the id of the target user of a transaction
+- `amount` - the amount in fictional currency of the transaction
+- `action` - the action type of the transaction (see [Definitions/Possible Values](#Definitions/Possible%20Values))
+- `status` - the status of the transaction (see [Definitions/Possible Values](#Definitions/Possible%20Values))
+- `note` - the user-provided text of the transaction purpose/description, e.g. "Utilities"
+- `date_created` - the date the transaction was initiated (see [Definitions/Possible Values](#Definitions/Possible%20Values) for date format)
+- `date_completed` - the date the transaction was completed (see [Definitions/Possible Values](#Definitions/Possible%20Values) for date format)
+- `audience` - the audience that has permission to see this transaction (see [Definitions/Possible Values](#Definitions/Possible%20Values))
+## TABLE friends
+A table containing friend/relationship/friend request data between users. `user1_id` should/must ALWAYS be the lower of the pair of ids. This way, only one row is needed per relationship, and the relationship can always be found by querying the lower user's id.
+- `user1_id` - the id of one of the users (always lower than corresponding `user2_id`)
+- `user2_id` - the id of the other user (always higher than corresponding `user1_id`)
+- `relationship` - the relationship between the users (see [Definitions/Possible Values](#Definitions/Possible%20Values))
+## Definitions/Possible Values
+Definitions and valid values for the **DATABASE VALUES**. Note that request/response variables of the same name may have different valid/expected values; the values below apply only to entries in the database.
+- `action` - The type of transaction
+	- Valid/possible values:
+		- `pay` - the actor is paying the target
+		- `request` - the actor is requesting payment from the target
+- `status` - The status of a transaction
+	- Valid/possible values:
+		- `settled` - the transaction has been completed
+			- Automatic for `pay` actions (if the user has sufficient funds)
+			- Set for `request` when the request is either approved or denied
+		- `pending` - the transaction is pending
+			- When a `request` is made but not completed by the target
+		- `cancelled` - the `request` has been cancelled by the target
+		- `denied` - the `request` has been denied by the target
+- Date/Time format - [Unix time](https://en.wikipedia.org/wiki/Unix_time) (seconds since the Unix epoch, 00:00:00 UTC on 1 January 1970)
+- `audience` - the audience that has permission to see the transaction
+	- Valid/possible values:
+		- `private` - only the actor and the target
+		- `friends` - friends of the actor and friends of the target
+		- `public` - any user
+- `relationship` - the relationship/request status between two users
+	- `none`
+	- `friend` - the users are friends
+	- `user1Requested` - user1 has requested to friend user2
+	- `user2Requested` - user2 has requested to friend user1
+	- TODO: Implement blocking?
 # Database Structure
 
 ## Profiles
